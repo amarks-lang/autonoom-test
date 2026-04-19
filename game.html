@@ -21,6 +21,8 @@
 
     const obstacles = [];
     let spawnTimer = 0;
+    let score = 0;
+    let scoreTimer = 0;
 
     function spawnObstacle() {
       obstacles.push({
@@ -45,6 +47,9 @@
       spawnTimer++;
       if (spawnTimer >= 60) { spawnObstacle(); spawnTimer = 0; }
 
+      scoreTimer++;
+      if (scoreTimer >= 60) { score++; scoreTimer = 0; }
+
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
         if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
@@ -57,6 +62,10 @@
       for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
       ctx.fillStyle = player.color;
       ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Score: ' + score, 8, 20);
     }
 
     function loop() {
