@@ -19,6 +19,19 @@
 
     const player = { x: 40, y: 140, w: 30, h: 30, speed: 4, color: '#4af' };
 
+    const obstacles = [];
+    let spawnTimer = 0;
+
+    function spawnObstacle() {
+      obstacles.push({
+        x: Math.random() * (canvas.width - 20),
+        y: -20,
+        w: 20,
+        h: 20,
+        speed: 2 + Math.random() * 2
+      });
+    }
+
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup',  e => keys[e.key] = false);
@@ -28,10 +41,20 @@
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - player.speed);
       if (keys['ArrowDown'])  player.y = Math.min(canvas.height - player.h, player.y + player.speed);
+
+      spawnTimer++;
+      if (spawnTimer >= 60) { spawnObstacle(); spawnTimer = 0; }
+
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].y += obstacles[i].speed;
+        if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+      }
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#e44';
+      for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
       ctx.fillStyle = player.color;
       ctx.fillRect(player.x, player.y, player.w, player.h);
     }
