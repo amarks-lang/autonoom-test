@@ -50,6 +50,21 @@
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
 
+    // Sterren achtergrond
+    const stars = Array.from({ length: 60 }, () => ({
+      x: Math.random() * 480,
+      y: Math.random() * 200,
+      size: 1 + Math.random() * 2,
+      speed: 0.3 + Math.random() * 0.7
+    }));
+    function updateStars() {
+      for (const s of stars) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
+    }
+    function drawStars() {
+      ctx.fillStyle = '#aaa';
+      for (const s of stars) ctx.fillRect(s.x, s.y, s.size, s.size);
+    }
+
     // Particles
     const particles = [];
     function spawnParticles(x, y) {
@@ -125,6 +140,7 @@
     });
 
     function update() {
+      updateStars();
       if (!gameStarted || gameOver) return;
 
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
@@ -216,6 +232,7 @@
     function draw() {
       if (!gameStarted) { drawStartScreen(); return; }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStars();
       ctx.fillStyle = '#e44';
       for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
 
