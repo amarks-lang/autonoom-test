@@ -24,6 +24,7 @@
     let score = 0;
     let scoreTimer = 0;
     let gameOver = false;
+    let gameStarted = false;
 
     function spawnObstacle() {
       obstacles.push({
@@ -48,14 +49,16 @@
       obstacles.length = 0;
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
+      gameStarted = true;
     }
 
     document.addEventListener('keydown', e => {
+      if (!gameStarted && e.key === 'Enter') { gameStarted = true; }
       if (gameOver && e.key === 'Enter') reset();
     });
 
     function update() {
-      if (gameOver) return;
+      if (!gameStarted || gameOver) return;
 
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
@@ -75,7 +78,40 @@
       }
     }
 
+    function drawStartScreen() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#4af';
+      ctx.font = 'bold 40px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Blok Renner', canvas.width / 2, canvas.height / 2 - 40);
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px sans-serif';
+      ctx.fillText('Ontwijkt de rode blokken!', canvas.width / 2, canvas.height / 2);
+
+      // Start knop
+      const bx = canvas.width / 2 - 70, by = canvas.height / 2 + 20, bw = 140, bh = 40;
+      ctx.fillStyle = '#4af';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('START', canvas.width / 2, by + 28);
+      ctx.textAlign = 'left';
+
+      // Klik op knop
+      canvas.onclick = (e) => {
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          gameStarted = true;
+          canvas.onclick = null;
+        }
+      };
+    }
+
     function draw() {
+      if (!gameStarted) { drawStartScreen(); return; }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#e44';
       for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
