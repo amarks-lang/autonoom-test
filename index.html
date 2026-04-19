@@ -44,7 +44,7 @@
         y: -20,
         w: 20,
         h: 20,
-        speed: 2 + Math.random() * 2
+        speed: 2 + Math.random() * 2 + score * 0.3
       });
     }
 
@@ -77,8 +77,9 @@
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - player.speed);
       if (keys['ArrowDown'])  player.y = Math.min(canvas.height - player.h, player.y + player.speed);
 
+      const spawnInterval = Math.max(20, 60 - score * 2);
       spawnTimer++;
-      if (spawnTimer >= 60) { spawnObstacle(); spawnTimer = 0; }
+      if (spawnTimer >= spawnInterval) { spawnObstacle(); spawnTimer = 0; }
 
       scoreTimer++;
       if (scoreTimer >= 60) { score++; scoreTimer = 0; }
