@@ -50,6 +50,23 @@
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
 
+    // Particles
+    const particles = [];
+    function spawnParticles(x, y) {
+      const colors = ['#ff4','#f80','#f44','#f0f','#4ff'];
+      for (let i = 0; i < 18; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 3;
+        particles.push({
+          x: x + 15, y: y + 15,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          size: 4 + Math.random() * 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: 30 + Math.random() * 20
+        });
+      }
+    }
+
     // Power-up
     let powerUp = null;
     let powerUpTimer = 0;
@@ -136,6 +153,13 @@
         }
       }
 
+      // Particles updaten
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
 
@@ -144,6 +168,7 @@
         if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
         else if (!invincible && collides(player, obstacles[i])) {
             gameOver = true;
+            spawnParticles(player.x, player.y);
             playBeep(180, 0.4);
             if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
             break;
@@ -208,6 +233,14 @@
         ctx.fillStyle = invincible ? '#ff0' : player.color;
         ctx.fillRect(player.x, player.y, player.w, player.h);
       }
+
+      // Particles tekenen
+      for (const p of particles) {
+        ctx.globalAlpha = p.life / 50;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
 
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
