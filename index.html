@@ -50,6 +50,14 @@
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
 
+    // Power-up
+    let powerUp = null;
+    let powerUpTimer = 0;
+    let invincible = false;
+    let invincibleTimer = 0;
+    const POWERUP_INTERVAL = 300;
+    const INVINCIBLE_DURATION = 180;
+
     function spawnObstacle() {
       obstacles.push({
         x: Math.random() * (canvas.width - 20),
@@ -81,12 +89,17 @@
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
+    function spawnPowerUp() {
+      powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2 };
+    }
+
     function reset() {
       player.x = 40; player.y = 140;
       obstacles.length = 0;
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
       gameStarted = true;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -109,10 +122,27 @@
       scoreTimer++;
       if (scoreTimer >= 60) { score++; scoreTimer = 0; }
 
+      // Power-up spawnen
+      powerUpTimer++;
+      if (powerUpTimer >= POWERUP_INTERVAL && !powerUp) { spawnPowerUp(); powerUpTimer = 0; }
+
+      // Power-up bewegen & ophalen
+      if (powerUp) {
+        powerUp.y += powerUp.speed;
+        if (powerUp.y > canvas.height) { powerUp = null; }
+        else if (collides(player, powerUp)) {
+          invincible = true; invincibleTimer = INVINCIBLE_DURATION;
+          powerUp = null; playBeep(660, 0.15);
+        }
+      }
+
+      // Invincibility aftellen
+      if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
+
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
         if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
-        else if (collides(player, obstacles[i])) {
+        else if (!invincible && collides(player, obstacles[i])) {
             gameOver = true;
             playBeep(180, 0.4);
             if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
@@ -163,8 +193,21 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#e44';
       for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      // Power-up tekenen
+      if (powerUp) {
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
+      }
+
+      // Speler knippert als invincible
+      if (!invincible || Math.floor(invincibleTimer / 6) % 2 === 0) {
+        ctx.fillStyle = invincible ? '#ff0' : player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+      }
 
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
