@@ -23,6 +23,7 @@
     let spawnTimer = 0;
     let score = 0;
     let scoreTimer = 0;
+    let gameOver = false;
 
     function spawnObstacle() {
       obstacles.push({
@@ -38,7 +39,24 @@
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup',  e => keys[e.key] = false);
 
+    function collides(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function reset() {
+      player.x = 40; player.y = 140;
+      obstacles.length = 0;
+      spawnTimer = 0; scoreTimer = 0; score = 0;
+      gameOver = false;
+    }
+
+    document.addEventListener('keydown', e => {
+      if (gameOver && e.key === 'Enter') reset();
+    });
+
     function update() {
+      if (gameOver) return;
+
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - player.speed);
@@ -53,6 +71,7 @@
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
         if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+        else if (collides(player, obstacles[i])) { gameOver = true; break; }
       }
     }
 
@@ -66,6 +85,20 @@
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
+
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ff4444';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px sans-serif';
+        ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2 + 15);
+        ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 45);
+        ctx.textAlign = 'left';
+      }
     }
 
     function loop() {
