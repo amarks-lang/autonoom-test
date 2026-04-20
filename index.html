@@ -296,7 +296,21 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawStars();
       ctx.fillStyle = '#e44';
-      for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+      for (const o of obstacles) {
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        // Waarschuwingspijl voor snelle obstakels die nog boven het canvas zijn
+        if (o.speed > 4 && o.y < 0) {
+          const cx = o.x + o.w / 2;
+          ctx.fillStyle = `rgba(255,80,0,${0.5 + 0.5 * Math.abs(Math.sin(Date.now() / 150))})`;
+          ctx.beginPath();
+          ctx.moveTo(cx, 8);
+          ctx.lineTo(cx - 8, 0);
+          ctx.lineTo(cx + 8, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#e44';
+        }
+      }
 
       // Power-up tekenen
       if (powerUp) {
