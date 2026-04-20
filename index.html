@@ -120,20 +120,19 @@
     const COMBO_WINDOW = 120;
 
     function spawnObstacle() {
-      const shapes = [
-        { w: 20, h: 20 },
-        { w: 40, h: 16 },
-        { w: 16, h: 40 },
-      ];
-      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const types = ['rect', 'rect', 'rect', 'triangle', 'circle'];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const size = type === 'rect' ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
+      const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
+      const h = type === 'rect' ? [20,16,40][Math.floor(Math.random()*3)] : size;
       const spd = 2 + Math.random() * 2 + score * 0.3;
       obstacles.push({
-        x: Math.random() * (canvas.width - shape.w),
-        y: -shape.h,
-        w: shape.w,
-        h: shape.h,
+        x: Math.random() * (canvas.width - w),
+        y: -h,
+        w, h,
         speed: spd,
-        warn: spd > 5
+        warn: spd > 5,
+        type
       });
     }
 
@@ -327,7 +326,21 @@
       drawStars();
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
-        ctx.fillRect(o.x, o.y, o.w, o.h);
+        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : '#e44';
+        if (o.type === 'triangle') {
+          ctx.beginPath();
+          ctx.moveTo(o.x + o.w / 2, o.y);
+          ctx.lineTo(o.x + o.w, o.y + o.h);
+          ctx.lineTo(o.x, o.y + o.h);
+          ctx.closePath();
+          ctx.fill();
+        } else if (o.type === 'circle') {
+          ctx.beginPath();
+          ctx.arc(o.x + o.w / 2, o.y + o.h / 2, o.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+        }
         if (o.warn && o.y < 20) {
           ctx.fillStyle = '#f80';
           ctx.beginPath();
