@@ -54,6 +54,16 @@
     let gameOver = false;
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
+    function loadHighscores() {
+      try { return JSON.parse(localStorage.getItem('blokrenner_top3') || '[]'); } catch(e) { return []; }
+    }
+    function saveHighscores(sc) {
+      const list = loadHighscores();
+      list.push(sc);
+      list.sort((a, b) => b - a);
+      const top3 = list.slice(0, 3);
+      localStorage.setItem('blokrenner_top3', JSON.stringify(top3));
+    }
     let lives = 3;
     let hitInvincible = false;
     let hitInvincibleTimer = 0;
@@ -258,6 +268,7 @@
             if (lives <= 0) {
               gameOver = true;
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
+              saveHighscores(score);
             } else {
               hitInvincible = true;
               hitInvincibleTimer = HIT_INVINCIBLE_DURATION;
@@ -278,14 +289,20 @@
       ctx.fillStyle = '#fff';
       ctx.font = '18px sans-serif';
       ctx.fillText('Ontwijkt de rode blokken!', canvas.width / 2, canvas.height / 2);
-      if (highscore > 0) {
+      const top3 = loadHighscores();
+      if (top3.length > 0) {
         ctx.fillStyle = '#ff0';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 18);
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('Top scores:', canvas.width / 2, canvas.height / 2 + 16);
+        ctx.font = '13px sans-serif';
+        top3.forEach((s, i) => {
+          const medals = ['🥇','🥈','🥉'];
+          ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 30 + i * 15);
+        });
       }
 
       // Start knop
-      const bx = canvas.width / 2 - 70, by = canvas.height / 2 + 20, bw = 140, bh = 40;
+      const bx = canvas.width / 2 - 70, by = canvas.height / 2 + 75, bw = 140, bh = 40;
       ctx.fillStyle = '#4af';
       ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = '#000';
