@@ -49,6 +49,10 @@
     let gameOver = false;
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
+    let lives = 3;
+    let hitInvincible = false;
+    let hitInvincibleTimer = 0;
+    const HIT_INVINCIBLE_DURATION = 90;
 
     // Sterren achtergrond
     const stars = Array.from({ length: 60 }, () => ({
@@ -161,6 +165,7 @@
       gameOver = false;
       gameStarted = true;
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0;
+      lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -210,6 +215,7 @@
 
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
+      if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
@@ -231,11 +237,18 @@
             }
           }
           obstacles.splice(i, 1);
-        } else if (!invincible && collides(player, obstacles[i])) {
-            gameOver = true;
+        } else if (!invincible && !hitInvincible && collides(player, obstacles[i])) {
+            lives--;
             spawnParticles(player.x, player.y);
             playBeep(180, 0.4);
-            if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
+            obstacles.splice(i, 1);
+            if (lives <= 0) {
+              gameOver = true;
+              if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
+            } else {
+              hitInvincible = true;
+              hitInvincibleTimer = HIT_INVINCIBLE_DURATION;
+            }
             break;
           }
       }
@@ -294,8 +307,10 @@
         ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
       }
 
-      // Speler knippert als invincible
-      if (!invincible || Math.floor(invincibleTimer / 6) % 2 === 0) {
+      // Speler knippert als invincible of geraakt
+      const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
+      const blinkPow = invincible && Math.floor(invincibleTimer / 6) % 2 === 0;
+      if (!blinkHit && (!invincible || blinkPow)) {
         ctx.fillStyle = invincible ? '#ff0' : player.color;
         ctx.fillRect(player.x, player.y, player.w, player.h);
       }
@@ -311,6 +326,13 @@
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
+
+      // Hartjes levens
+      ctx.font = '18px sans-serif';
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = i < lives ? '#f44' : '#555';
+        ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+      }
 
       if (comboDisplayTimer > 0) {
         ctx.globalAlpha = Math.min(1, comboDisplayTimer / 20);
