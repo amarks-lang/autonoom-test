@@ -323,9 +323,12 @@
       }
       ctx.globalAlpha = 1;
 
+      const level = Math.floor(score / 10) + 1;
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
+      ctx.fillStyle = '#aff';
+      ctx.fillText('Level ' + level, 8, 40);
 
       // Hartjes levens
       ctx.font = '18px sans-serif';
