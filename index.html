@@ -90,6 +90,9 @@
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
 
+    // Pauze
+    let paused = false;
+
     // Combo-systeem
     let comboCount = 0;
     let comboTimer = 0;
@@ -163,11 +166,14 @@
     document.addEventListener('keydown', e => {
       if (!gameStarted && e.key === 'Enter') { gameStarted = true; }
       if (gameOver && e.key === 'Enter') reset();
+      if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
+        paused = !paused;
+      }
     });
 
     function update() {
       updateStars();
-      if (!gameStarted || gameOver) return;
+      if (!gameStarted || gameOver || paused) return;
 
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
@@ -314,6 +320,18 @@
         ctx.fillText(comboDisplay, canvas.width / 2, 44);
         ctx.textAlign = 'left';
         ctx.globalAlpha = 1;
+      }
+
+      if (paused && !gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUZE', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Druk P of Esc om door te gaan', canvas.width / 2, canvas.height / 2 + 18);
+        ctx.textAlign = 'left';
       }
 
       if (gameOver) {
