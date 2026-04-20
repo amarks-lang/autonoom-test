@@ -7,7 +7,9 @@
     body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
     h1 { margin-bottom: 10px; font-size: 1.5rem; }
     canvas { background: #222; border: 2px solid #555; }
-    #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; margin-top: 16px; user-select: none; }
+    #controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+    #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; user-select: none; }
+    #btn-pause { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
     #dpad button { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; }
     #dpad button:active { background: #4af; }
   </style>
@@ -16,14 +18,17 @@
   <h1>Blok Renner</h1>
   <canvas id="c" width="480" height="200"></canvas>
   <p id="info">Gebruik pijltjestoetsen of knoppen om te bewegen</p>
-  <div id="dpad">
-    <span></span>
-    <button id="btn-up">▲</button>
-    <span></span>
-    <button id="btn-left">◀</button>
-    <button id="btn-down">▼</button>
-    <button id="btn-right">▶</button>
-    <span></span><span></span><span></span>
+  <div id="controls">
+    <div id="dpad">
+      <span></span>
+      <button id="btn-up">▲</button>
+      <span></span>
+      <button id="btn-left">◀</button>
+      <button id="btn-down">▼</button>
+      <button id="btn-right">▶</button>
+      <span></span><span></span><span></span>
+    </div>
+    <button id="btn-pause">⏸</button>
   </div>
   <script>
     const canvas = document.getElementById('c');
@@ -138,6 +143,12 @@
     bindBtn('btn-down',  'ArrowDown');
     bindBtn('btn-left',  'ArrowLeft');
     bindBtn('btn-right', 'ArrowRight');
+
+    const pauseBtn = document.getElementById('btn-pause');
+    pauseBtn.addEventListener('click', () => {
+      if (gameStarted && !gameOver) paused = !paused;
+    });
+    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) paused = !paused; }, { passive: false });
 
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
