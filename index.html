@@ -307,6 +307,12 @@
         ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
       }
 
+      // Kleur op basis van score: blauw→groen→geel→rood
+      if (score < 10) player.color = '#4af';
+      else if (score < 25) player.color = '#4f8';
+      else if (score < 45) player.color = '#ff4';
+      else player.color = '#f64';
+
       // Speler knippert als invincible of geraakt
       const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
       const blinkPow = invincible && Math.floor(invincibleTimer / 6) % 2 === 0;
