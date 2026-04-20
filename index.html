@@ -90,6 +90,9 @@
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
 
+    // Pauze
+    let paused = false;
+
     // Combo-systeem
     let comboCount = 0;
     let comboTimer = 0;
@@ -98,11 +101,17 @@
     const COMBO_WINDOW = 120;
 
     function spawnObstacle() {
+      const shapes = [
+        { w: 20, h: 20 },
+        { w: 40, h: 16 },
+        { w: 16, h: 40 },
+      ];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
       obstacles.push({
-        x: Math.random() * (canvas.width - 20),
-        y: -20,
-        w: 20,
-        h: 20,
+        x: Math.random() * (canvas.width - shape.w),
+        y: -shape.h,
+        w: shape.w,
+        h: shape.h,
         speed: 2 + Math.random() * 2 + score * 0.3
       });
     }
@@ -128,8 +137,21 @@
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
+    function playRisingSweep() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(900, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+
     function spawnPowerUp() {
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2 };
+      playRisingSweep();
     }
 
     function reset() {
@@ -144,11 +166,14 @@
     document.addEventListener('keydown', e => {
       if (!gameStarted && e.key === 'Enter') { gameStarted = true; }
       if (gameOver && e.key === 'Enter') reset();
+      if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
+        paused = !paused;
+      }
     });
 
     function update() {
       updateStars();
-      if (!gameStarted || gameOver) return;
+      if (!gameStarted || gameOver || paused) return;
 
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
@@ -295,6 +320,18 @@
         ctx.fillText(comboDisplay, canvas.width / 2, 44);
         ctx.textAlign = 'left';
         ctx.globalAlpha = 1;
+      }
+
+      if (paused && !gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUZE', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Druk P of Esc om door te gaan', canvas.width / 2, canvas.height / 2 + 18);
+        ctx.textAlign = 'left';
       }
 
       if (gameOver) {

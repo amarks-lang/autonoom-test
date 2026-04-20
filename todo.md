@@ -1,5 +1,7 @@
 # Game Taken
 
-3. Geluid bij power-up spawnen: kort oplopend geluidje als het groene blokje verschijnt
-4. Obstakels in verschillende vormen: naast vierkanten ook rechthoeken (breed of hoog)
-5. Pauze-functie: druk op P of Escape om het spel te pauzeren en hervatten
+1. Levens-systeem: geef de speler 3 levens (hartjes), verlies een leven bij botsing in plaats van direct game over
+2. Moeilijkheidsgraad-indicator: toon een level-aanduiding (bijv. "Level 2") dat elke 10 punten omhoog gaat
+3. Kleurverandering speler: de speler verandert van kleur naarmate de score stijgt (blauw → groen → geel → rood)
+4. Obstakel-waarschuwing: toon een korte flits of pijl aan de bovenkant als er een gevaarlijk snel obstakel aankomt
+5. Touch-pauze knop: voeg een zichtbare pauze-knop toe naast de d-pad voor mobiel gebruik
