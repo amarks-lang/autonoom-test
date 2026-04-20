@@ -121,6 +121,7 @@
     // Pauze
     let paused = false;
     let scoreFlash = 0;
+    const trail = [];
 
     // Combo-systeem
     let comboCount = 0;
@@ -211,6 +212,11 @@
     function update() {
       updateStars();
       if (!gameStarted || gameOver || paused) return;
+
+      const moving = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown'];
+      if (moving) trail.push({ x: player.x, y: player.y, life: 10 });
+      if (trail.length > 8) trail.shift();
+      for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
       if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
       if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
@@ -373,6 +379,15 @@
         ctx.font = '12px sans-serif';
         ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
       }
+
+      // Trail tekenen
+      for (let i = 0; i < trail.length; i++) {
+        const t = trail[i];
+        ctx.globalAlpha = (t.life / 10) * 0.4;
+        ctx.fillStyle = player.color || '#4af';
+        ctx.fillRect(t.x, t.y, player.w, player.h);
+      }
+      ctx.globalAlpha = 1;
 
       // Kleur op basis van score: blauw→groen→geel→rood
       if (score < 10) player.color = '#4af';
