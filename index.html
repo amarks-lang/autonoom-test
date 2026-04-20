@@ -90,6 +90,13 @@
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
 
+    // Combo-systeem
+    let comboCount = 0;
+    let comboTimer = 0;
+    let comboDisplay = '';
+    let comboDisplayTimer = 0;
+    const COMBO_WINDOW = 120;
+
     function spawnObstacle() {
       obstacles.push({
         x: Math.random() * (canvas.width - 20),
@@ -179,10 +186,27 @@
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
 
+      if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
+      if (comboDisplayTimer > 0) comboDisplayTimer--;
+
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
-        if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
-        else if (!invincible && collides(player, obstacles[i])) {
+        if (obstacles[i].y > canvas.height) {
+          const obsMidX = obstacles[i].x + obstacles[i].w / 2;
+          const playerMidX = player.x + player.w / 2;
+          if (Math.abs(obsMidX - playerMidX) < 60) {
+            comboCount = comboTimer > 0 ? comboCount + 1 : 1;
+            comboTimer = COMBO_WINDOW;
+            if (comboCount >= 2) {
+              const bonus = comboCount * 2;
+              score += bonus;
+              comboDisplay = `COMBO x${comboCount}! +${bonus}`;
+              comboDisplayTimer = 90;
+              playBeep(880, 0.1);
+            }
+          }
+          obstacles.splice(i, 1);
+        } else if (!invincible && collides(player, obstacles[i])) {
             gameOver = true;
             spawnParticles(player.x, player.y);
             playBeep(180, 0.4);
@@ -262,6 +286,16 @@
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
+
+      if (comboDisplayTimer > 0) {
+        ctx.globalAlpha = Math.min(1, comboDisplayTimer / 20);
+        ctx.fillStyle = '#ff0';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(comboDisplay, canvas.width / 2, 44);
+        ctx.textAlign = 'left';
+        ctx.globalAlpha = 1;
+      }
 
       if (gameOver) {
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
