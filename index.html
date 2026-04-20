@@ -120,6 +120,7 @@
 
     // Pauze
     let paused = false;
+    let scoreFlash = 0;
 
     // Combo-systeem
     let comboCount = 0;
@@ -221,7 +222,7 @@
       if (spawnTimer >= spawnInterval) { spawnObstacle(); spawnTimer = 0; }
 
       scoreTimer++;
-      if (scoreTimer >= 60) { score++; scoreTimer = 0; }
+      if (scoreTimer >= 60) { score++; scoreTimer = 0; scoreFlash = 12; }
 
       // Power-up spawnen
       powerUpTimer++;
@@ -250,6 +251,7 @@
 
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
+      if (scoreFlash > 0) scoreFlash--;
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
@@ -394,9 +396,17 @@
       }
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = '#fff';
-      ctx.font = '16px sans-serif';
-      ctx.fillText('Score: ' + score, 8, 20);
+      const flashScale = scoreFlash > 0 ? 1 + 0.5 * (scoreFlash / 12) : 1;
+      const flashColor = scoreFlash > 0 ? '#ff0' : '#fff';
+      ctx.save();
+      ctx.translate(8 + 30, 14);
+      ctx.scale(flashScale, flashScale);
+      ctx.fillStyle = flashColor;
+      ctx.font = `bold ${Math.round(16 * flashScale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Score: ' + score, 0, 0);
+      ctx.restore();
+      ctx.textAlign = 'left';
 
       const level = Math.floor(score / 10) + 1;
       ctx.fillStyle = '#4af';
