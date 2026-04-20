@@ -98,11 +98,17 @@
     const COMBO_WINDOW = 120;
 
     function spawnObstacle() {
+      const shapes = [
+        { w: 20, h: 20 },
+        { w: 40, h: 16 },
+        { w: 16, h: 40 },
+      ];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
       obstacles.push({
-        x: Math.random() * (canvas.width - 20),
-        y: -20,
-        w: 20,
-        h: 20,
+        x: Math.random() * (canvas.width - shape.w),
+        y: -shape.h,
+        w: shape.w,
+        h: shape.h,
         speed: 2 + Math.random() * 2 + score * 0.3
       });
     }
