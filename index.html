@@ -69,17 +69,26 @@
     let hitInvincibleTimer = 0;
     const HIT_INVINCIBLE_DURATION = 90;
 
-    // Sterren achtergrond
+    // Sterren achtergrond (twee lagen voor parallax)
     const stars = Array.from({ length: 60 }, () => ({
       x: Math.random() * 480,
       y: Math.random() * 200,
       size: 1 + Math.random() * 2,
       speed: 0.3 + Math.random() * 0.7
     }));
+    const starsBack = Array.from({ length: 35 }, () => ({
+      x: Math.random() * 480,
+      y: Math.random() * 200,
+      size: 0.5 + Math.random() * 1,
+      speed: 0.1 + Math.random() * 0.2
+    }));
     function updateStars() {
       for (const s of stars) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
+      for (const s of starsBack) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
     }
     function drawStars() {
+      ctx.fillStyle = '#555';
+      for (const s of starsBack) ctx.fillRect(s.x, s.y, s.size, s.size);
       ctx.fillStyle = '#aaa';
       for (const s of stars) ctx.fillRect(s.x, s.y, s.size, s.size);
     }
