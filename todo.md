@@ -1,3 +1,7 @@
 # Game Taken
 
-5. Speler-trail: toon een korte naspoor (trail) achter de speler bij hoge snelheid
+1. Power-up variatie: voeg een snelheidsboost power-up toe (groen pijltje) naast de bestaande schildpower-up
+2. Level-aankondiging: toon een korte "LEVEL X!" banner in het midden van het scherm bij elke level-overgang
+3. Geluid bij combo: speel een oplopend akkoord af bij combo x3 of hoger
+4. Game Over animatie: laat het canvas kort rood oplichten bij game over
+5. Mobiele layout: vergroot het canvas op smalle schermen (max-width < 500px) zodat het beter past op telefoons
