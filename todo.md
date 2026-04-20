@@ -1,6 +1,7 @@
 # Game Taken
 
-1. Moeilijkheidsgraad-indicator: toon een level-aanduiding (bijv. "Level 2") dat elke 10 punten omhoog gaat
-2. Kleurverandering speler: de speler verandert van kleur naarmate de score stijgt (blauw → groen → geel → rood)
-3. Obstakel-waarschuwing: toon een korte flits of pijl aan de bovenkant als er een gevaarlijk snel obstakel aankomt
-4. Touch-pauze knop: voeg een zichtbare pauze-knop toe naast de d-pad voor mobiel gebruik
+1. Highscore animatie: toon een korte "Nieuw Record!" animatie als de speler een nieuw highscore behaalt
+2. Achtergrond-parallax: voeg een tweede laag sterren toe die langzamer beweegt voor diepte-effect
+3. Geluid bij level-up: speel een kort oplopend geluidje als de speler een nieuw level bereikt
+4. Obstakel-diversiteit: voeg driehoekige en ronde obstakels toe naast de bestaande blokken
+5. Score-multiplier display: toon een x2 of x3 multiplier indicator als de speler snel punten scoort

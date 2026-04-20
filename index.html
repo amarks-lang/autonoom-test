@@ -7,23 +7,28 @@
     body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
     h1 { margin-bottom: 10px; font-size: 1.5rem; }
     canvas { background: #222; border: 2px solid #555; }
-    #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; margin-top: 16px; user-select: none; }
+    #controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+    #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; user-select: none; }
     #dpad button { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; }
     #dpad button:active { background: #4af; }
+    #btn-pause { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 28px; cursor: pointer; touch-action: none; width: 60px; height: 60px; }
   </style>
 </head>
 <body>
   <h1>Blok Renner</h1>
   <canvas id="c" width="480" height="200"></canvas>
   <p id="info">Gebruik pijltjestoetsen of knoppen om te bewegen</p>
-  <div id="dpad">
-    <span></span>
-    <button id="btn-up">▲</button>
-    <span></span>
-    <button id="btn-left">◀</button>
-    <button id="btn-down">▼</button>
-    <button id="btn-right">▶</button>
-    <span></span><span></span><span></span>
+  <div id="controls">
+    <div id="dpad">
+      <span></span>
+      <button id="btn-up">▲</button>
+      <span></span>
+      <button id="btn-left">◀</button>
+      <button id="btn-down">▼</button>
+      <button id="btn-right">▶</button>
+      <span></span><span></span><span></span>
+    </div>
+    <button id="btn-pause">⏸</button>
   </div>
   <script>
     const canvas = document.getElementById('c');
@@ -136,6 +141,10 @@
     bindBtn('btn-down',  'ArrowDown');
     bindBtn('btn-left',  'ArrowLeft');
     bindBtn('btn-right', 'ArrowRight');
+
+    const pauseBtn = document.getElementById('btn-pause');
+    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) paused = !paused; }, { passive: false });
+    pauseBtn.addEventListener('mousedown', () => { if (gameStarted && !gameOver) paused = !paused; });
 
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -296,7 +305,21 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawStars();
       ctx.fillStyle = '#e44';
-      for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+      for (const o of obstacles) {
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        // Waarschuwingspijl voor snelle obstakels die nog boven het canvas zijn
+        if (o.speed > 4 && o.y < 0) {
+          const cx = o.x + o.w / 2;
+          ctx.fillStyle = `rgba(255,80,0,${0.5 + 0.5 * Math.abs(Math.sin(Date.now() / 150))})`;
+          ctx.beginPath();
+          ctx.moveTo(cx, 8);
+          ctx.lineTo(cx - 8, 0);
+          ctx.lineTo(cx + 8, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#e44';
+        }
+      }
 
       // Power-up tekenen
       if (powerUp) {
@@ -306,6 +329,12 @@
         ctx.font = '12px sans-serif';
         ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
       }
+
+      // Kleur op basis van score: blauw → groen → geel → rood
+      if (score < 10) player.color = '#4af';
+      else if (score < 20) player.color = '#4f8';
+      else if (score < 30) player.color = '#ff4';
+      else player.color = '#f44';
 
       // Speler knippert als invincible of geraakt
       const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
@@ -323,9 +352,12 @@
       }
       ctx.globalAlpha = 1;
 
+      const level = Math.floor(score / 10) + 1;
       ctx.fillStyle = '#fff';
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
+      ctx.fillStyle = '#aff';
+      ctx.fillText('Level ' + level, 8, 40);
 
       // Hartjes levens
       ctx.font = '18px sans-serif';
