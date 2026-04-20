@@ -327,6 +327,13 @@
       ctx.font = '16px sans-serif';
       ctx.fillText('Score: ' + score, 8, 20);
 
+      const level = Math.floor(score / 10) + 1;
+      ctx.fillStyle = '#4af';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Level ' + level, canvas.width / 2, 20);
+      ctx.textAlign = 'left';
+
       // Hartjes levens
       ctx.font = '18px sans-serif';
       for (let i = 0; i < 3; i++) {
