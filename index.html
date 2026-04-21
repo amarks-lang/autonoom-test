@@ -180,6 +180,22 @@
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
+    function playComboChord(combo) {
+      const baseFreqs = [330, 392, 494, 587, 698, 831];
+      const notes = Math.min(combo, baseFreqs.length);
+      for (let i = 0; i < notes; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.value = baseFreqs[i];
+        const t = audioCtx.currentTime + i * 0.08;
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.start(t); osc.stop(t + 0.2);
+      }
+    }
+
     function playRisingSweep() {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -291,7 +307,8 @@
               score += bonus;
               comboDisplay = `COMBO x${comboCount}! +${bonus}`;
               comboDisplayTimer = 90;
-              playBeep(880, 0.1);
+              if (comboCount >= 3) playComboChord(comboCount);
+              else playBeep(880, 0.1);
             }
           }
           obstacles.splice(i, 1);
