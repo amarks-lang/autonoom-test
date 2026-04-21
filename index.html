@@ -474,6 +474,18 @@
       ctx.fillText('Level ' + level, canvas.width / 2, 20);
       ctx.textAlign = 'left';
 
+      // Voortgangsbalk naar volgend level
+      const levelProgress = (score % 10) / 10;
+      const barW = 120, barH = 5;
+      const barX = canvas.width / 2 - barW / 2, barY = 26;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = '#4af';
+      ctx.fillRect(barX, barY, barW * levelProgress, barH);
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barW, barH);
+
       // Hartjes levens
       ctx.font = '18px sans-serif';
       for (let i = 0; i < 3; i++) {
