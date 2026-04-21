@@ -132,6 +132,9 @@
     let comboDisplay = '';
     let comboDisplayTimer = 0;
     const COMBO_WINDOW = 120;
+    let lastLevel = 1;
+    let levelBanner = '';
+    let levelBannerTimer = 0;
 
     function spawnObstacle() {
       const types = ['rect', 'rect', 'rect', 'triangle', 'circle'];
@@ -202,6 +205,7 @@
       gameOver = false;
       gameStarted = true;
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
+      lastLevel = 1; levelBanner = ''; levelBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
@@ -233,7 +237,11 @@
       if (spawnTimer >= spawnInterval) { spawnObstacle(); spawnTimer = 0; }
 
       scoreTimer++;
-      if (scoreTimer >= 60) { score++; scoreTimer = 0; scoreFlash = 12; }
+      if (scoreTimer >= 60) {
+        score++; scoreTimer = 0; scoreFlash = 12;
+        const newLevel = Math.floor(score / 10) + 1;
+        if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; playBeep(523, 0.2); }
+      }
 
       // Power-up spawnen
       powerUpTimer++;
@@ -267,6 +275,7 @@
 
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
+      if (levelBannerTimer > 0) levelBannerTimer--;
       if (scoreFlash > 0) scoreFlash--;
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -455,6 +464,22 @@
         ctx.fillText(comboDisplay, canvas.width / 2, 44);
         ctx.textAlign = 'left';
         ctx.globalAlpha = 1;
+      }
+
+      if (levelBannerTimer > 0) {
+        const alpha = levelBannerTimer > 30 ? 1 : levelBannerTimer / 30;
+        const scale = levelBannerTimer > 90 ? 1 + 0.4 * ((120 - levelBannerTimer) / 30) : 1;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#4af';
+        ctx.font = 'bold 40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(levelBanner, 0, 0);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
       }
 
       if (paused && !gameOver) {
