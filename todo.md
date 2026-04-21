@@ -1,6 +1,7 @@
 # Game Taken
 
-1. Speler animatie: laat de speler roteren (spin) bij het bewegen voor meer dynamiek
-2. Achtergrondmuziek: speel een herhalende bas-toon lus af die sneller wordt naarmate het level hoger is
-3. Highscore in pauze-menu: toon huidige score en highscore ook in het pauze-scherm
-4. Obstakel-variatie: voeg een zigzag-bewegend obstakel toe dat horizontaal heen en weer beweegt terwijl het daalt
+1. Power-up animatie: laat de power-up pulseren (schaal op en neer) zodat hij opvalt
+2. Top-3 in game-over scherm: toon de top-3 highscores na het verliezen
+3. Level-up flits: flash het hele canvas kort in een kleur bij een nieuw level
+4. Obstakel waarschuwing voor zigzag: toon ook een pijl-waarschuwing voor snelle zigzag-obstakels
+5. Speler schaduw: teken een zachte schaduw onder de speler voor meer diepte
