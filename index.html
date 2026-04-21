@@ -51,6 +51,37 @@
       osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
+    // Achtergrondmuziek: bas-toon lus die sneller wordt per level
+    let bgMusicNode = null;
+    let bgMusicGain = null;
+    let bgMusicInterval = null;
+    const BG_NOTES = [55, 55, 69, 55, 62, 55, 65, 55];
+    let bgNoteIndex = 0;
+    function playBgNote() {
+      const level = Math.floor(score / 10) + 1;
+      const bpm = 80 + (level - 1) * 15;
+      const interval = (60 / bpm) * 1000 / 2;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = BG_NOTES[bgNoteIndex % BG_NOTES.length];
+      bgNoteIndex++;
+      g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+      if (bgMusicInterval !== null) clearTimeout(bgMusicInterval);
+      if (!paused && !gameOver && gameStarted) bgMusicInterval = setTimeout(playBgNote, interval);
+    }
+    function startBgMusic() {
+      bgNoteIndex = 0;
+      if (bgMusicInterval !== null) clearTimeout(bgMusicInterval);
+      playBgNote();
+    }
+    function stopBgMusic() {
+      if (bgMusicInterval !== null) { clearTimeout(bgMusicInterval); bgMusicInterval = null; }
+    }
+
     const player = { x: 40, y: 140, w: 30, h: 30, speed: 4, color: '#4af' };
 
     const obstacles = [];
@@ -180,9 +211,9 @@
 
     const pauseBtn = document.getElementById('btn-pause');
     pauseBtn.addEventListener('click', () => {
-      if (gameStarted && !gameOver) paused = !paused;
+      if (gameStarted && !gameOver) { paused = !paused; if (paused) stopBgMusic(); else startBgMusic(); }
     });
-    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) paused = !paused; }, { passive: false });
+    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) { paused = !paused; if (paused) stopBgMusic(); else startBgMusic(); } }, { passive: false });
 
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -231,13 +262,15 @@
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; gameOverFlash = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; playerAngle = 0;
+      startBgMusic();
     }
 
     document.addEventListener('keydown', e => {
-      if (!gameStarted && e.key === 'Enter') { gameStarted = true; }
+      if (!gameStarted && e.key === 'Enter') { gameStarted = true; startBgMusic(); }
       if (gameOver && e.key === 'Enter') reset();
       if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
         paused = !paused;
+        if (paused) stopBgMusic(); else startBgMusic();
       }
     });
 
@@ -328,7 +361,7 @@
             playBeep(180, 0.4);
             obstacles.splice(i, 1);
             if (lives <= 0) {
-              gameOver = true; gameOverFlash = 30;
+              gameOver = true; gameOverFlash = 30; stopBgMusic();
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
               saveHighscores(score);
             } else {
@@ -377,7 +410,7 @@
         const r = canvas.getBoundingClientRect();
         const mx = e.clientX - r.left, my = e.clientY - r.top;
         if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
-          gameStarted = true;
+          gameStarted = true; startBgMusic();
           canvas.onclick = null;
         }
       };
