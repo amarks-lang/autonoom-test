@@ -166,20 +166,25 @@
     let gameOverFlash = 0;
 
     function spawnObstacle() {
-      const types = ['rect', 'rect', 'rect', 'triangle', 'circle'];
+      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
       const type = types[Math.floor(Math.random() * types.length)];
-      const size = type === 'rect' ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
+      const size = (type === 'rect') ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
       const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
       const h = type === 'rect' ? [20,16,40][Math.floor(Math.random()*3)] : size;
       const spd = 2 + Math.random() * 2 + score * 0.3;
-      obstacles.push({
+      const obs = {
         x: Math.random() * (canvas.width - w),
         y: -h,
         w, h,
         speed: spd,
         warn: spd > 5,
         type
-      });
+      };
+      if (type === 'zigzag') {
+        obs.zigzagSpeed = 2 + Math.random() * 2;
+        obs.zigzagDir = Math.random() < 0.5 ? 1 : -1;
+      }
+      obstacles.push(obs);
     }
 
     const keys = {};
@@ -329,6 +334,13 @@
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
+        if (obstacles[i].type === 'zigzag') {
+          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+          if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
+            obstacles[i].zigzagDir *= -1;
+            obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
+          }
+        }
         if (obstacles[i].y > canvas.height) {
           const obsMidX = obstacles[i].x + obstacles[i].w / 2;
           const playerMidX = player.x + player.w / 2;
@@ -412,7 +424,7 @@
       drawStars();
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
-        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : '#e44';
+        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
           ctx.moveTo(o.x + o.w / 2, o.y);
@@ -424,6 +436,18 @@
           ctx.beginPath();
           ctx.arc(o.x + o.w / 2, o.y + o.h / 2, o.w / 2, 0, Math.PI * 2);
           ctx.fill();
+        } else if (o.type === 'zigzag') {
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const zSteps = 4, zW = o.w / zSteps;
+          ctx.moveTo(o.x, o.y + o.h / 2);
+          for (let z = 0; z < zSteps; z++) {
+            ctx.lineTo(o.x + zW * z + zW / 2, z % 2 === 0 ? o.y + 4 : o.y + o.h - 4);
+            ctx.lineTo(o.x + zW * (z + 1), o.y + o.h / 2);
+          }
+          ctx.stroke();
         } else {
           ctx.fillRect(o.x, o.y, o.w, o.h);
         }
