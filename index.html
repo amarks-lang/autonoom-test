@@ -41,6 +41,28 @@
     const ctx = canvas.getContext('2d');
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Achtergrondmuziek: bas-puls die sneller tikt op hogere levels
+    let bgBeatInterval = null;
+    function startBgMusic() {
+      if (bgBeatInterval) return;
+      function tick() {
+        if (!gameStarted || gameOver || paused) return;
+        const level = Math.floor(score / 10) + 1;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 60 + (level - 1) * 10;
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        const interval = Math.max(300, 800 - (level - 1) * 80);
+        bgBeatInterval = setTimeout(tick, interval);
+      }
+      tick();
+    }
+    function stopBgMusic() { clearTimeout(bgBeatInterval); bgBeatInterval = null; }
     function playBeep(freq, duration, type = 'square') {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -166,9 +188,9 @@
 
     function bindBtn(id, key) {
       const btn = document.getElementById(id);
-      btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; if (!gameStarted) { gameStarted = true; } }, { passive: false });
+      btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; if (!gameStarted) { gameStarted = true; startBgMusic(); } }, { passive: false });
       btn.addEventListener('touchend',   e => { e.preventDefault(); keys[key] = false; }, { passive: false });
-      btn.addEventListener('mousedown',  () => { keys[key] = true;  if (!gameStarted) { gameStarted = true; } });
+      btn.addEventListener('mousedown',  () => { keys[key] = true;  if (!gameStarted) { gameStarted = true; startBgMusic(); } });
       btn.addEventListener('mouseup',    () => { keys[key] = false; });
       btn.addEventListener('mouseleave', () => { keys[key] = false; });
     }
@@ -227,13 +249,14 @@
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
       gameStarted = true;
+      stopBgMusic(); startBgMusic();
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; gameOverFlash = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
-      if (!gameStarted && e.key === 'Enter') { gameStarted = true; }
+      if (!gameStarted && e.key === 'Enter') { gameStarted = true; startBgMusic(); }
       if (gameOver && e.key === 'Enter') reset();
       if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
         paused = !paused;
@@ -328,7 +351,7 @@
             playBeep(180, 0.4);
             obstacles.splice(i, 1);
             if (lives <= 0) {
-              gameOver = true; gameOverFlash = 30;
+              gameOver = true; gameOverFlash = 30; stopBgMusic();
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
               saveHighscores(score);
             } else {
@@ -377,7 +400,7 @@
         const r = canvas.getBoundingClientRect();
         const mx = e.clientX - r.left, my = e.clientY - r.top;
         if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
-          gameStarted = true;
+          gameStarted = true; startBgMusic();
           canvas.onclick = null;
         }
       };
