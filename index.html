@@ -135,6 +135,7 @@
     let lastLevel = 1;
     let levelBanner = '';
     let levelBannerTimer = 0;
+    let gameOverFlash = 0;
 
     function spawnObstacle() {
       const types = ['rect', 'rect', 'rect', 'triangle', 'circle'];
@@ -221,7 +222,7 @@
       gameOver = false;
       gameStarted = true;
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
-      lastLevel = 1; levelBanner = ''; levelBannerTimer = 0;
+      lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; gameOverFlash = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
@@ -292,6 +293,7 @@
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
       if (levelBannerTimer > 0) levelBannerTimer--;
+      if (gameOverFlash > 0) gameOverFlash--;
       if (scoreFlash > 0) scoreFlash--;
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -318,7 +320,7 @@
             playBeep(180, 0.4);
             obstacles.splice(i, 1);
             if (lives <= 0) {
-              gameOver = true;
+              gameOver = true; gameOverFlash = 30;
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
               saveHighscores(score);
             } else {
@@ -509,6 +511,11 @@
         ctx.font = '16px sans-serif';
         ctx.fillText('Druk P of Esc om door te gaan', canvas.width / 2, canvas.height / 2 + 18);
         ctx.textAlign = 'left';
+      }
+
+      if (gameOverFlash > 0) {
+        ctx.fillStyle = `rgba(220,0,0,${(gameOverFlash / 30) * 0.6})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
       if (gameOver) {
