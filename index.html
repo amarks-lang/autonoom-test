@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Block Runner</title>
+  <style>
+    body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    h1 { color: #fff; font-family: monospace; margin-bottom: 12px; }
+    canvas { border: 2px solid #444; background: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <h1>Block Runner</h1>
+  <canvas id="c" width="480" height="320"></canvas>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const player = { x: 220, y: 140, w: 32, h: 32, vx: 0, vy: 0, speed: 4 };
+    const keys = {};
+
+    document.addEventListener('keydown', e => keys[e.key] = true);
+    document.addEventListener('keyup',  e => keys[e.key] = false);
+
+    function update() {
+      player.vx = 0;
+      player.vy = 0;
+      if (keys['ArrowLeft']  || keys['a']) player.vx = -player.speed;
+      if (keys['ArrowRight'] || keys['d']) player.vx =  player.speed;
+      if (keys['ArrowUp']    || keys['w']) player.vy = -player.speed;
+      if (keys['ArrowDown']  || keys['s']) player.vy =  player.speed;
+
+      player.x = Math.max(0, Math.min(canvas.width  - player.w, player.x + player.vx));
+      player.y = Math.max(0, Math.min(canvas.height - player.h, player.y + player.vy));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#e94560';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px monospace';
+      ctx.fillText('Gebruik pijltjestoetsen of WASD om te bewegen', 10, 314);
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+    loop();
+  </script>
+</body>
+</html>
