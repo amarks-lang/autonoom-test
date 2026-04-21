@@ -51,7 +51,7 @@
       osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
-    const player = { x: 40, y: 140, w: 30, h: 30, speed: 4, color: '#4af' };
+    const player = { x: 40, y: 140, w: 30, h: 30, speed: 4, color: '#4af', rotation: 0, rotVel: 0 };
 
     const obstacles = [];
     let spawnTimer = 0;
@@ -222,7 +222,7 @@
     }
 
     function reset() {
-      player.x = 40; player.y = 140;
+      player.x = 40; player.y = 140; player.rotation = 0; player.rotVel = 0;
       obstacles.length = 0;
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
@@ -250,10 +250,12 @@
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
       const currentSpeed = speedBoost ? player.speed * 2 : player.speed;
-      if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - currentSpeed);
-      if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + currentSpeed);
+      if (keys['ArrowLeft'])  { player.x = Math.max(0, player.x - currentSpeed); player.rotVel -= 0.04; }
+      if (keys['ArrowRight']) { player.x = Math.min(canvas.width - player.w, player.x + currentSpeed); player.rotVel += 0.04; }
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - currentSpeed);
       if (keys['ArrowDown'])  player.y = Math.min(canvas.height - player.h, player.y + currentSpeed);
+      player.rotVel *= 0.88;
+      player.rotation += player.rotVel;
 
       const spawnInterval = Math.max(20, 60 - score * 2);
       spawnTimer++;
@@ -443,8 +445,12 @@
       const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
       const blinkPow = invincible && Math.floor(invincibleTimer / 6) % 2 === 0;
       if (!blinkHit && (!invincible || blinkPow)) {
+        ctx.save();
+        ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+        ctx.rotate(player.rotation);
         ctx.fillStyle = invincible ? '#ff0' : player.color;
-        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+        ctx.restore();
       }
 
       // Particles tekenen
