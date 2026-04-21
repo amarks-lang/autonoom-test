@@ -6,7 +6,13 @@
   <style>
     body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
     h1 { margin-bottom: 10px; font-size: 1.5rem; }
-    canvas { background: #222; border: 2px solid #555; }
+    canvas { background: #222; border: 2px solid #555; max-width: 100%; }
+    @media (max-width: 500px) {
+      canvas { width: 100vw !important; height: auto !important; }
+      h1 { font-size: 1.1rem; }
+      #dpad button, #btn-pause { width: 50px; height: 50px; font-size: 20px; }
+      #dpad { grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); }
+    }
     #controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
     #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; user-select: none; }
     #btn-pause { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
