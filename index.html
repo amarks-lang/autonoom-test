@@ -176,19 +176,24 @@
     let gameOverFlash = 0;
 
     function spawnObstacle() {
-      const types = ['rect', 'rect', 'rect', 'triangle', 'circle'];
+      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
       const type = types[Math.floor(Math.random() * types.length)];
-      const size = type === 'rect' ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
-      const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
-      const h = type === 'rect' ? [20,16,40][Math.floor(Math.random()*3)] : size;
+      const size = (type === 'rect') ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
+      const w = (type === 'rect') ? [20,40,16][Math.floor(Math.random()*3)] : size;
+      const h = (type === 'rect') ? [20,16,40][Math.floor(Math.random()*3)] : size;
       const spd = 2 + Math.random() * 2 + score * 0.3;
+      const startX = Math.random() * (canvas.width - w);
       obstacles.push({
-        x: Math.random() * (canvas.width - w),
+        x: startX,
         y: -h,
         w, h,
         speed: spd,
         warn: spd > 5,
-        type
+        type,
+        zigzagAmp: type === 'zigzag' ? 60 : 0,
+        zigzagSpeed: type === 'zigzag' ? 0.07 : 0,
+        zigzagOrigin: startX,
+        zigzagPhase: Math.random() * Math.PI * 2
       });
     }
 
@@ -339,6 +344,11 @@
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].y += obstacles[i].speed;
+        if (obstacles[i].type === 'zigzag') {
+          obstacles[i].zigzagPhase += obstacles[i].zigzagSpeed;
+          obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w,
+            obstacles[i].zigzagOrigin + Math.sin(obstacles[i].zigzagPhase) * obstacles[i].zigzagAmp));
+        }
         if (obstacles[i].y > canvas.height) {
           const obsMidX = obstacles[i].x + obstacles[i].w / 2;
           const playerMidX = player.x + player.w / 2;
@@ -422,7 +432,7 @@
       drawStars();
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
-        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : '#e44';
+        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0fa' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
           ctx.moveTo(o.x + o.w / 2, o.y);
@@ -434,6 +444,17 @@
           ctx.beginPath();
           ctx.arc(o.x + o.w / 2, o.y + o.h / 2, o.w / 2, 0, Math.PI * 2);
           ctx.fill();
+        } else if (o.type === 'zigzag') {
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const zx = o.x, zy = o.y, zw = o.w, zh = o.h;
+          ctx.moveTo(zx + 2, zy + zh / 2);
+          ctx.lineTo(zx + zw * 0.3, zy + 4);
+          ctx.lineTo(zx + zw * 0.6, zy + zh - 4);
+          ctx.lineTo(zx + zw - 2, zy + zh / 2);
+          ctx.stroke();
         } else {
           ctx.fillRect(o.x, o.y, o.w, o.h);
         }
