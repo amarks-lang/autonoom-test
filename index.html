@@ -115,8 +115,11 @@
     let powerUpTimer = 0;
     let invincible = false;
     let invincibleTimer = 0;
+    let speedBoost = false;
+    let speedBoostTimer = 0;
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
+    const SPEED_BOOST_DURATION = 180;
 
     // Pauze
     let paused = false;
@@ -187,7 +190,8 @@
     }
 
     function spawnPowerUp() {
-      powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2 };
+      const type = Math.random() < 0.5 ? 'shield' : 'speed';
+      powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
 
@@ -197,7 +201,7 @@
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
       gameStarted = true;
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
@@ -218,10 +222,11 @@
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
-      if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - player.speed);
-      if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
-      if (keys['ArrowUp'])    player.y = Math.max(0, player.y - player.speed);
-      if (keys['ArrowDown'])  player.y = Math.min(canvas.height - player.h, player.y + player.speed);
+      const currentSpeed = speedBoost ? player.speed * 2 : player.speed;
+      if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - currentSpeed);
+      if (keys['ArrowRight']) player.x = Math.min(canvas.width - player.w, player.x + currentSpeed);
+      if (keys['ArrowUp'])    player.y = Math.max(0, player.y - currentSpeed);
+      if (keys['ArrowDown'])  player.y = Math.min(canvas.height - player.h, player.y + currentSpeed);
 
       const spawnInterval = Math.max(20, 60 - score * 2);
       spawnTimer++;
@@ -239,7 +244,11 @@
         powerUp.y += powerUp.speed;
         if (powerUp.y > canvas.height) { powerUp = null; }
         else if (collides(player, powerUp)) {
-          invincible = true; invincibleTimer = INVINCIBLE_DURATION;
+          if (powerUp.type === 'shield') {
+            invincible = true; invincibleTimer = INVINCIBLE_DURATION;
+          } else {
+            speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
+          }
           powerUp = null; playBeep(660, 0.15);
         }
       }
@@ -253,6 +262,7 @@
 
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
+      if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) speedBoost = false; }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
@@ -373,11 +383,11 @@
 
       // Power-up tekenen
       if (powerUp) {
-        ctx.fillStyle = '#0f0';
+        ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
         ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
         ctx.fillStyle = '#fff';
         ctx.font = '12px sans-serif';
-        ctx.fillText('★', powerUp.x + 4, powerUp.y + 15);
+        ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
       }
 
       // Trail tekenen
