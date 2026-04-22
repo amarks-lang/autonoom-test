@@ -1,6 +1,5 @@
 # Game Taken
 
-1. Knipperend hart bij leven verlies: laat het verloren hart 30 frames knipperen voordat het grijs wordt
 2. Start-introtekst: animeer de spelernaam "Blok Renner" letter voor letter in op het startscherm
 3. Power-up waarschuwing: toon een knipperende tekst "SHIELD VERDWIJNT!" als de invincible-timer onder 30 frames zakt
 4. Obstakel-schaduw per type: geef elk obstakteltype een eigen gekleurde gloed (shadowBlur) passend bij zijn kleur
