@@ -24,6 +24,9 @@
   <h1>Blok Renner</h1>
   <canvas id="c" width="480" height="200"></canvas>
   <p id="info">Gebruik pijltjestoetsen of knoppen om te bewegen</p>
+  <div id="skin-select" style="display:flex;gap:8px;align-items:center;margin:4px 0;font-size:13px;color:#aaa;">
+    <span>Kleur:</span>
+  </div>
   <div id="controls">
     <div id="dpad">
       <span></span>
@@ -153,6 +156,8 @@
     let paused = false;
     let scoreFlash = 0;
     const trail = [];
+    const skinColors = ['#4af', '#f80', '#0f8'];
+    let skinColor = skinColors[0];
 
     // Combo-systeem
     let comboCount = 0;
@@ -494,11 +499,7 @@
       }
       ctx.globalAlpha = 1;
 
-      // Kleur op basis van score: blauw→groen→geel→rood
-      if (score < 10) player.color = '#4af';
-      else if (score < 25) player.color = '#4f8';
-      else if (score < 45) player.color = '#ff4';
-      else player.color = '#f64';
+      player.color = skinColor;
 
       // Speler knippert als invincible of geraakt
       const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
@@ -659,6 +660,20 @@
       draw();
       requestAnimationFrame(loop);
     }
+
+    // Skin keuze knoppen
+    const skinSelectDiv = document.getElementById('skin-select');
+    skinColors.forEach((color, i) => {
+      const btn = document.createElement('div');
+      btn.style.cssText = `width:22px;height:22px;background:${color};border-radius:4px;cursor:pointer;border:3px solid ${i===0?'#fff':'transparent'};`;
+      btn.addEventListener('click', () => {
+        skinColor = color;
+        skinSelectDiv.querySelectorAll('div').forEach((d, j) => {
+          d.style.border = `3px solid ${j === i ? '#fff' : 'transparent'}`;
+        });
+      });
+      skinSelectDiv.appendChild(btn);
+    });
 
     loop();
   </script>
