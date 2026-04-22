@@ -163,6 +163,7 @@
     let lastLevel = 1;
     let levelBanner = '';
     let levelBannerTimer = 0;
+    let levelFlash = 0;
     let gameOverFlash = 0;
 
     function spawnObstacle() {
@@ -256,7 +257,7 @@
       gameStarted = true;
       stopBgMusic(); startBgMusic();
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
-      lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; gameOverFlash = 0;
+      lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
     }
 
@@ -293,7 +294,7 @@
       if (scoreTimer >= 60) {
         score++; scoreTimer = 0; scoreFlash = 12;
         const newLevel = Math.floor(score / 10) + 1;
-        if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; playBeep(523, 0.2); }
+        if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2); }
       }
 
       // Power-up spawnen
@@ -329,6 +330,7 @@
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
       if (levelBannerTimer > 0) levelBannerTimer--;
+      if (levelFlash > 0) levelFlash--;
       if (gameOverFlash > 0) gameOverFlash--;
       if (scoreFlash > 0) scoreFlash--;
 
@@ -588,6 +590,11 @@
         ctx.font = '13px sans-serif';
         ctx.fillText('Druk P of Esc om door te gaan', canvas.width / 2, canvas.height / 2 + 44);
         ctx.textAlign = 'left';
+      }
+
+      if (levelFlash > 0) {
+        ctx.fillStyle = `rgba(0,255,180,${(levelFlash / 22) * 0.45})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
       if (gameOverFlash > 0) {
