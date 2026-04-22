@@ -603,6 +603,25 @@
       ctx.restore();
       ctx.textAlign = 'left';
 
+      // Snelheidsmeter (verticale balk links)
+      const speedVal = Math.min(2 + score * 0.3, 10);
+      const speedFrac = (speedVal - 2) / 8;
+      const smH = canvas.height - 10, smW = 5, smX = 2, smY = 5;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(smX, smY, smW, smH);
+      const fillH = smH * speedFrac;
+      const sr = Math.round(speedFrac * 255), sg = Math.round((1 - speedFrac) * 200);
+      ctx.fillStyle = `rgb(${sr},${sg},60)`;
+      ctx.fillRect(smX, smY + smH - fillH, smW, fillH);
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(smX, smY, smW, smH);
+      ctx.fillStyle = '#aaa';
+      ctx.font = '7px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('spd', smX + smW / 2, smY + smH + 8);
+      ctx.textAlign = 'left';
+
       // Combo-badge naast score
       if (comboCount >= 2 && comboTimer > 0) {
         const mult = Math.min(comboCount, 6);
