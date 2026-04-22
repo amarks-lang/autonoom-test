@@ -596,6 +596,16 @@
         ctx.fillRect(barX, barY, barW * (timer / maxDur), 4);
       }
 
+      // Shield verdwijnt waarschuwing
+      if (invincible && invincibleTimer < 30 && Math.floor(invincibleTimer / 4) % 2 === 0) {
+        ctx.save();
+        ctx.fillStyle = '#ff0';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SHIELD VERDWIJNT!', canvas.width / 2, player.y - 10);
+        ctx.restore();
+      }
+
       // Particles tekenen
       for (const p of particles) {
         ctx.globalAlpha = p.life / 50;
