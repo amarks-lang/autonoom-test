@@ -154,6 +154,7 @@
 
     // Pauze
     let paused = false;
+    let playerIdleTimer = 0;
     let scoreFlash = 0;
     const scorePops = [];
     const explosionRings = [];
@@ -313,6 +314,7 @@
       if (gameOver || paused) return;
 
       const moving = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown'];
+      if (moving) { playerIdleTimer = 0; } else { playerIdleTimer++; }
       if (moving) trail.push({ x: player.x, y: player.y, life: 10 });
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
@@ -586,6 +588,8 @@
         ctx.save();
         ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
         ctx.rotate(player.rotation);
+        const pulseScale = playerIdleTimer > 0 ? 1 + 0.08 * Math.sin(playerIdleTimer * Math.PI * 2 / 60) : 1;
+        ctx.scale(pulseScale, pulseScale);
         if (invincible) {
           ctx.shadowColor = '#ff0';
           ctx.shadowBlur = 18 + 8 * Math.sin(Date.now() / 80);
