@@ -433,6 +433,20 @@
       if (!gameStarted) { drawStartScreen(); return; }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawStars();
+      // Waarschuwingslijnen voor snelle obstakels
+      for (const o of obstacles) {
+        if (o.warn) {
+          ctx.save();
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = 'rgba(255,60,60,0.35)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(o.x + o.w / 2, 0);
+          ctx.lineTo(o.x + o.w / 2, canvas.height);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
         // schaduw
