@@ -176,6 +176,9 @@
     const SHAKE_DURATION = 12;
     let heartBlinkTimer = 0;
     let heartBlinkIndex = -1;
+    let introLetters = 0;
+    let introLetterTimer = 0;
+    const INTRO_TITLE = 'Blok Renner';
 
     function spawnObstacle() {
       const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
@@ -295,7 +298,15 @@
 
     function update() {
       updateStars();
-      if (!gameStarted || gameOver || paused) return;
+      if (!gameStarted) {
+        introLetterTimer++;
+        if (introLetterTimer >= 4 && introLetters < INTRO_TITLE.length) {
+          introLetters++;
+          introLetterTimer = 0;
+        }
+        return;
+      }
+      if (gameOver || paused) return;
 
       const moving = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown'];
       if (moving) trail.push({ x: player.x, y: player.y, life: 10 });
@@ -424,7 +435,7 @@
       ctx.fillStyle = '#4af';
       ctx.font = 'bold 40px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Blok Renner', canvas.width / 2, canvas.height / 2 - 40);
+      ctx.fillText(INTRO_TITLE.slice(0, introLetters), canvas.width / 2, canvas.height / 2 - 40);
       ctx.fillStyle = '#fff';
       ctx.font = '18px sans-serif';
       ctx.fillText('Ontwijkt de rode blokken!', canvas.width / 2, canvas.height / 2);
