@@ -155,6 +155,7 @@
     // Pauze
     let paused = false;
     let scoreFlash = 0;
+    const scorePops = [];
     const trail = [];
     const skinColors = ['#4af', '#f80', '#0f8'];
     let skinColor = skinColors[0];
@@ -316,6 +317,7 @@
       scoreTimer++;
       if (scoreTimer >= 60) {
         score++; scoreTimer = 0; scoreFlash = 12;
+        scorePops.push({ x: player.x + player.w / 2, y: player.y - 4, text: '+1', life: 50, maxLife: 50 });
         const newLevel = Math.floor(score / 10) + 1;
         if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2); }
       }
@@ -350,6 +352,7 @@
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
+      for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
       if (levelBannerTimer > 0) levelBannerTimer--;
@@ -378,6 +381,7 @@
               score += bonus;
               comboDisplay = `COMBO x${comboCount}! +${bonus}`;
               comboDisplayTimer = 90;
+              scorePops.push({ x: player.x + player.w / 2, y: player.y - 4, text: '+' + bonus, life: 60, maxLife: 60, big: true });
               if (comboCount >= 3) playComboChord(comboCount);
               else playBeep(880, 0.1);
             }
@@ -572,6 +576,15 @@
       }
       ctx.globalAlpha = 1;
 
+      for (const sp of scorePops) {
+        ctx.save();
+        ctx.globalAlpha = sp.life / sp.maxLife;
+        ctx.fillStyle = sp.big ? '#f80' : '#ff0';
+        ctx.font = `bold ${sp.big ? 16 : 13}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(sp.text, sp.x, sp.y);
+        ctx.restore();
+      }
       const flashScale = scoreFlash > 0 ? 1 + 0.5 * (scoreFlash / 12) : 1;
       const flashColor = scoreFlash > 0 ? '#ff0' : '#fff';
       ctx.save();
