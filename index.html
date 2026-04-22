@@ -426,6 +426,12 @@
       drawStars();
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
+        // schaduw
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(o.x + 4, o.y + 4, o.w, o.h);
+        ctx.restore();
         ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
