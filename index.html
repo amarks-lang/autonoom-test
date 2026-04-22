@@ -609,6 +609,20 @@
         ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
       }
 
+      // Mini-kaart (20×10px) rechtsboven
+      const mmX = canvas.width - 22, mmY = 32, mmW = 20, mmH = 10;
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(mmX, mmY, mmW, mmH);
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(mmX, mmY, mmW, mmH);
+      for (const o of obstacles) {
+        ctx.fillStyle = '#e44';
+        ctx.fillRect(mmX + (o.x / canvas.width) * mmW, mmY + (o.y / canvas.height) * mmH, 1, 1);
+      }
+      ctx.fillStyle = skinColor || '#4af';
+      ctx.fillRect(mmX + (player.x / canvas.width) * mmW, mmY + (player.y / canvas.height) * mmH, 2, 1);
+
       if (comboDisplayTimer > 0) {
         ctx.globalAlpha = Math.min(1, comboDisplayTimer / 20);
         ctx.fillStyle = '#ff0';
