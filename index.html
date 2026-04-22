@@ -236,6 +236,18 @@
       }
     }
 
+    function playFallingSweep() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(180, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+
     function playRisingSweep() {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -332,8 +344,8 @@
       }
 
       // Invincibility aftellen
-      if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) invincible = false; }
-      if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) speedBoost = false; }
+      if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
+      if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
