@@ -508,6 +508,19 @@
         ctx.restore();
       }
 
+      // Power-up aftelbalk onder speler
+      if (invincible || speedBoost) {
+        const timer = invincible ? invincibleTimer : speedBoostTimer;
+        const maxDur = invincible ? INVINCIBLE_DURATION : SPEED_BOOST_DURATION;
+        const barW = player.w + 8;
+        const barX = player.x - 4;
+        const barY = player.y + player.h + 4;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barW, 4);
+        ctx.fillStyle = invincible ? '#ff0' : '#0cf';
+        ctx.fillRect(barX, barY, barW * (timer / maxDur), 4);
+      }
+
       // Particles tekenen
       for (const p of particles) {
         ctx.globalAlpha = p.life / 50;
