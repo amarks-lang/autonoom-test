@@ -507,6 +507,10 @@
         ctx.fillStyle = '#000';
         ctx.fillRect(o.x + 4, o.y + 4, o.w, o.h);
         ctx.restore();
+        const glowMap = { rect: '#e44', triangle: '#f80', circle: '#c4f', zigzag: '#0ef' };
+        ctx.save();
+        ctx.shadowColor = glowMap[o.type] || '#e44';
+        ctx.shadowBlur = 10;
         ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
@@ -521,6 +525,7 @@
           ctx.fill();
         } else if (o.type === 'zigzag') {
           ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.shadowBlur = 0;
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -534,6 +539,7 @@
         } else {
           ctx.fillRect(o.x, o.y, o.w, o.h);
         }
+        ctx.restore();
         if (o.warn && o.y < 20) {
           ctx.fillStyle = '#f80';
           ctx.beginPath();
