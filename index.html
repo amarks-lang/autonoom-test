@@ -202,6 +202,16 @@
       if (type === 'zigzag') {
         obs.zigzagSpeed = 2 + Math.random() * 2;
         obs.zigzagDir = Math.random() < 0.5 ? 1 : -1;
+        // 40% kans: van links of rechts het scherm in ipv van boven
+        if (Math.random() < 0.4) {
+          const fromLeft = Math.random() < 0.5;
+          obs.x = fromLeft ? -w : canvas.width;
+          obs.y = Math.random() * (canvas.height - h);
+          obs.speed = 0; // geen verticale beweging
+          obs.zigzagSpeed = 2 + Math.random() * 2;
+          obs.zigzagDir = fromLeft ? 1 : -1;
+          obs.horizontal = true;
+        }
       }
       obstacles.push(obs);
     }
@@ -387,15 +397,23 @@
       if (heartBlinkTimer > 0) heartBlinkTimer--;
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
-        obstacles[i].y += obstacles[i].speed;
-        if (obstacles[i].type === 'zigzag') {
+        if (obstacles[i].horizontal) {
           obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
-          if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
-            obstacles[i].zigzagDir *= -1;
-            obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
+          obstacles[i].y += (Math.random() - 0.5) * 1.5;
+          obstacles[i].y = Math.max(0, Math.min(canvas.height - obstacles[i].h, obstacles[i].y));
+        } else {
+          obstacles[i].y += obstacles[i].speed;
+          if (obstacles[i].type === 'zigzag') {
+            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+            if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
+              obstacles[i].zigzagDir *= -1;
+              obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
+            }
           }
         }
-        if (obstacles[i].y > canvas.height) {
+        if (obstacles[i].horizontal
+            ? (obstacles[i].x > canvas.width + obstacles[i].w || obstacles[i].x < -obstacles[i].w * 2)
+            : obstacles[i].y > canvas.height) {
           const obsMidX = obstacles[i].x + obstacles[i].w / 2;
           const playerMidX = player.x + player.w / 2;
           if (Math.abs(obsMidX - playerMidX) < 60) {
