@@ -451,7 +451,13 @@
 
     function draw() {
       if (!gameStarted) { drawStartScreen(); return; }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const level = Math.floor(score / 10) + 1;
+      const t = Math.min((level - 1) / 9, 1);
+      const r = Math.round(t * 80);
+      const g = Math.round((1 - t) * 10);
+      const b = Math.round((1 - t) * 60);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       const shakeX = shakeTimer > 0 ? (Math.random() - 0.5) * 6 * (shakeTimer / SHAKE_DURATION) : 0;
       const shakeY = shakeTimer > 0 ? (Math.random() - 0.5) * 4 * (shakeTimer / SHAKE_DURATION) : 0;
       ctx.save();
@@ -608,7 +614,6 @@
         ctx.restore();
       }
 
-      const level = Math.floor(score / 10) + 1;
       ctx.fillStyle = '#4af';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
