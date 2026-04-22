@@ -156,6 +156,7 @@
     let paused = false;
     let scoreFlash = 0;
     const scorePops = [];
+    const explosionRings = [];
     const trail = [];
     const skinColors = ['#4af', '#f80', '#0f8'];
     let skinColor = skinColors[0];
@@ -278,7 +279,7 @@
       stopBgMusic(); startBgMusic();
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
-      lives = 3; hitInvincible = false; hitInvincibleTimer = 0;
+      lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -353,6 +354,7 @@
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
+      for (let i = explosionRings.length - 1; i >= 0; i--) { const ring = explosionRings[i]; ring.r += (ring.maxR - ring.r) * 0.06; ring.life--; if (ring.life <= 0) explosionRings.splice(i, 1); }
       if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
       if (comboDisplayTimer > 0) comboDisplayTimer--;
       if (levelBannerTimer > 0) levelBannerTimer--;
@@ -395,6 +397,9 @@
             shakeTimer = SHAKE_DURATION;
             if (lives <= 0) {
               gameOver = true; gameOverFlash = 30; stopBgMusic();
+              const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+              explosionRings.push({ x: cx, y: cy, r: 10, maxR: 90, life: 60, maxLife: 60 });
+              explosionRings.push({ x: cx, y: cy, r: 5, maxR: 140, life: 80, maxLife: 80 });
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); }
               saveHighscores(score);
             } else {
@@ -724,6 +729,17 @@
       if (gameOverFlash > 0) {
         ctx.fillStyle = `rgba(220,0,0,${(gameOverFlash / 30) * 0.6})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      for (const ring of explosionRings) {
+        ctx.save();
+        ctx.globalAlpha = (ring.life / ring.maxLife) * 0.7;
+        ctx.strokeStyle = '#ff4';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       if (gameOver) {
