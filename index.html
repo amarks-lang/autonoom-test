@@ -629,6 +629,13 @@
         ctx.fillRect(barX, barY, barW, 4);
         ctx.fillStyle = invincible ? '#ff0' : '#0cf';
         ctx.fillRect(barX, barY, barW * (timer / maxDur), 4);
+        const secsLeft = Math.ceil(timer / 60);
+        ctx.save();
+        ctx.fillStyle = invincible ? '#ff0' : '#0cf';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(secsLeft + 's', barX + barW + 3, barY + 4);
+        ctx.restore();
       }
 
       // Shield verdwijnt waarschuwing
