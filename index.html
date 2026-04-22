@@ -288,7 +288,11 @@
 
       const spawnInterval = Math.max(20, 60 - score * 2);
       spawnTimer++;
-      if (spawnTimer >= spawnInterval) { spawnObstacle(); spawnTimer = 0; }
+      if (spawnTimer >= spawnInterval) {
+        spawnObstacle();
+        if (Math.floor(score / 10) + 1 >= 5) spawnObstacle();
+        spawnTimer = 0;
+      }
 
       scoreTimer++;
       if (scoreTimer >= 60) {
