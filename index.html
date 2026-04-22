@@ -545,6 +545,17 @@
       ctx.restore();
       ctx.textAlign = 'left';
 
+      // Combo-badge naast score
+      if (comboCount >= 2 && comboTimer > 0) {
+        const mult = Math.min(comboCount, 6);
+        ctx.save();
+        ctx.fillStyle = '#f80';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('x' + mult, 72, 9);
+        ctx.restore();
+      }
+
       const level = Math.floor(score / 10) + 1;
       ctx.fillStyle = '#4af';
       ctx.font = 'bold 15px sans-serif';
