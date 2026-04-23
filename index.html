@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Blok Avontuur</title>
+  <style>
+    body { margin: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    h1 { color: #e0e0ff; font-family: sans-serif; margin-bottom: 12px; }
+    canvas { border: 2px solid #4444aa; background: #16213e; }
+  </style>
+</head>
+<body>
+  <h1>Blok Avontuur</h1>
+  <canvas id="c" width="480" height="320"></canvas>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const player = { x: 220, y: 260, w: 30, h: 30, speed: 4 };
+    const keys = {};
+
+    document.addEventListener('keydown', e => keys[e.key] = true);
+    document.addEventListener('keyup',   e => keys[e.key] = false);
+
+    function update() {
+      if (keys['ArrowLeft']  || keys['a']) player.x -= player.speed;
+      if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
+      if (keys['ArrowUp']    || keys['w']) player.y -= player.speed;
+      if (keys['ArrowDown']  || keys['s']) player.y += player.speed;
+      player.x = Math.max(0, Math.min(canvas.width  - player.w, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5588ff';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+    loop();
+  </script>
+</body>
+</html>
