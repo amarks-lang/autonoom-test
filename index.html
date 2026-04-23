@@ -157,6 +157,7 @@
     let paused = false;
     let playerIdleTimer = 0;
     let scoreFlash = 0;
+    let powerUpFlash = 0;
     const scorePops = [];
     const explosionRings = [];
     const trail = [];
@@ -301,7 +302,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -369,7 +370,7 @@
           } else {
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           }
-          powerUp = null; playBeep(660, 0.15);
+          powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
       }
 
@@ -396,6 +397,7 @@
       if (shakeTimer > 0) shakeTimer--;
       if (scoreFlash > 0) scoreFlash--;
       if (heartBlinkTimer > 0) heartBlinkTimer--;
+      if (powerUpFlash > 0) powerUpFlash--;
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
         if (obstacles[i].horizontal) {
@@ -814,6 +816,11 @@
 
       if (levelFlash > 0) {
         ctx.fillStyle = `rgba(0,255,180,${(levelFlash / 22) * 0.45})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (powerUpFlash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${0.6 * Math.sin((powerUpFlash / 12) * Math.PI)})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
