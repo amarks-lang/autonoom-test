@@ -255,10 +255,11 @@
     bindBtn('btn-right', 'ArrowRight');
 
     const pauseBtn = document.getElementById('btn-pause');
+    function updatePauseIcon() { pauseBtn.textContent = paused ? '▶' : '⏸'; }
     pauseBtn.addEventListener('click', () => {
-      if (gameStarted && !gameOver) paused = !paused;
+      if (gameStarted && !gameOver) { paused = !paused; updatePauseIcon(); }
     });
-    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) paused = !paused; }, { passive: false });
+    pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) { paused = !paused; updatePauseIcon(); } }, { passive: false });
 
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -328,7 +329,7 @@
       if (!gameStarted && e.key === 'Enter') { gameStarted = true; startBgMusic(); }
       if (gameOver && e.key === 'Enter') reset();
       if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
-        paused = !paused;
+        paused = !paused; updatePauseIcon();
       }
     });
 
