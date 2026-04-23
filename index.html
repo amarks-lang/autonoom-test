@@ -177,6 +177,7 @@
     const MILESTONES = { 10: 'Halverwege!', 20: 'Bijna level 3!', 50: 'Score 50! Geweldig!' };
     let levelFlash = 0;
     let gameOverFlash = 0;
+    let pickupFlash = 0;
     let shakeTimer = 0;
     const SHAKE_DURATION = 12;
     let heartBlinkTimer = 0;
@@ -369,7 +370,7 @@
           } else {
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           }
-          powerUp = null; playBeep(660, 0.15);
+          powerUp = null; playBeep(660, 0.15); pickupFlash = 12;
         }
       }
 
@@ -393,6 +394,7 @@
       if (milestoneBannerTimer > 0) milestoneBannerTimer--;
       if (levelFlash > 0) levelFlash--;
       if (gameOverFlash > 0) gameOverFlash--;
+      if (pickupFlash > 0) pickupFlash--;
       if (shakeTimer > 0) shakeTimer--;
       if (scoreFlash > 0) scoreFlash--;
       if (heartBlinkTimer > 0) heartBlinkTimer--;
@@ -814,6 +816,12 @@
 
       if (levelFlash > 0) {
         ctx.fillStyle = `rgba(0,255,180,${(levelFlash / 22) * 0.45})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (pickupFlash > 0) {
+        const pAlpha = 0.6 * Math.sin((pickupFlash / 12) * Math.PI);
+        ctx.fillStyle = `rgba(255,255,255,${pAlpha})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
