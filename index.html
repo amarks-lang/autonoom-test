@@ -15,7 +15,7 @@
     }
     #controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
     #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; user-select: none; }
-    #btn-pause { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
+    #btn-pause, #btn-mute { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
     #dpad button { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; }
     #dpad button:active { background: #4af; }
   </style>
@@ -38,12 +38,15 @@
       <span></span><span></span><span></span>
     </div>
     <button id="btn-pause">⏸</button>
+    <button id="btn-mute">🔊</button>
   </div>
   <script>
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    let muted = false;
 
     // Achtergrondmuziek: bas-puls die sneller tikt op hogere levels
     let bgBeatInterval = null;
@@ -52,14 +55,16 @@
       function tick() {
         if (!gameStarted || gameOver || paused) return;
         const level = Math.floor(score / 10) + 1;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = 60 + (level - 1) * 10;
-        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        if (!muted) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = 60 + (level - 1) * 10;
+          gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+          osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
         const interval = Math.max(300, 800 - (level - 1) * 80);
         bgBeatInterval = setTimeout(tick, interval);
       }
@@ -67,6 +72,7 @@
     }
     function stopBgMusic() { clearTimeout(bgBeatInterval); bgBeatInterval = null; }
     function playBeep(freq, duration, type = 'square') {
+      if (muted) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain); gain.connect(audioCtx.destination);
@@ -261,11 +267,17 @@
     });
     pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); if (gameStarted && !gameOver) { paused = !paused; updatePauseIcon(); } }, { passive: false });
 
+    const muteBtn = document.getElementById('btn-mute');
+    function updateMuteIcon() { muteBtn.textContent = muted ? '🔇' : '🔊'; }
+    muteBtn.addEventListener('click', () => { muted = !muted; updateMuteIcon(); });
+    muteBtn.addEventListener('touchstart', e => { e.preventDefault(); muted = !muted; updateMuteIcon(); }, { passive: false });
+
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
     function playComboChord(combo) {
+      if (muted) return;
       const baseFreqs = [330, 392, 494, 587, 698, 831];
       const notes = Math.min(combo, baseFreqs.length);
       for (let i = 0; i < notes; i++) {
@@ -282,6 +294,7 @@
     }
 
     function playFallingSweep() {
+      if (muted) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain); gain.connect(audioCtx.destination);
@@ -294,6 +307,7 @@
     }
 
     function playRisingSweep() {
+      if (muted) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain); gain.connect(audioCtx.destination);
