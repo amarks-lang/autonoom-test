@@ -615,8 +615,11 @@
         if (invincible) {
           ctx.shadowColor = '#ff0';
           ctx.shadowBlur = 18 + 8 * Math.sin(Date.now() / 80);
+        } else if (speedBoost) {
+          ctx.shadowColor = '#0cf';
+          ctx.shadowBlur = 18 + 8 * Math.sin(Date.now() / 80);
         }
-        ctx.fillStyle = invincible ? '#ff0' : player.color;
+        ctx.fillStyle = invincible ? '#ff0' : speedBoost ? '#0cf' : player.color;
         ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
         ctx.restore();
       }
