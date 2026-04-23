@@ -92,6 +92,9 @@
     let gameStarted = false;
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
     let isNewHighscore = false;
+    let sessionTimer = 0;
+    let bestTime = parseInt(localStorage.getItem('blokrenner_bt') || '0');
+    let isNewBestTime = false;
     function loadHighscores() {
       try { return JSON.parse(localStorage.getItem('blokrenner_top3') || '[]'); } catch(e) { return []; }
     }
@@ -352,7 +355,7 @@
       powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
-      lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
+      lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
     }
 
@@ -406,6 +409,7 @@
         spawnTimer = 0;
       }
 
+      sessionTimer++;
       scoreTimer++;
       if (scoreTimer >= 60) {
         score += scoreMultiplier; scoreTimer = 0; scoreFlash = 12;
@@ -533,6 +537,8 @@
               explosionRings.push({ x: cx, y: cy, r: 10, maxR: 90, life: 60, maxLife: 60 });
               explosionRings.push({ x: cx, y: cy, r: 5, maxR: 140, life: 80, maxLife: 80 });
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
+              const survivedSecs = Math.floor(sessionTimer / 60);
+              if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
               saveHighscores(score);
             } else {
               hitInvincible = true;
@@ -554,6 +560,11 @@
       ctx.fillStyle = '#fff';
       ctx.font = '18px sans-serif';
       ctx.fillText('Ontwijkt de rode blokken!', canvas.width / 2, canvas.height / 2);
+      if (bestTime > 0) {
+        ctx.fillStyle = isNewBestTime ? '#0f8' : '#aaa';
+        ctx.font = (isNewBestTime ? 'bold ' : '') + '11px sans-serif';
+        ctx.fillText('⏱ Beste tijd: ' + bestTime + 's' + (isNewBestTime ? '  ★ Nieuw record!' : ''), canvas.width / 2, canvas.height / 2 + 12);
+      }
       const top3 = loadHighscores();
       if (top3.length > 0) {
         ctx.fillStyle = '#ff0';
