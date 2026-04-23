@@ -1,6 +1,5 @@
 # Game Taken
 
-1. Voeg een geluid aan/uit knop toe (🔊/🔇) naast de pauzeknop zodat spelers audio kunnen dempen
 2. Voeg vallende muntjes toe (gele diamantjes) die +5 punten geven bij oprapen
 3. Voeg een "score multiplier" power-up toe (paarse ster) die 30 seconden lang 2x punten geeft
 4. Voeg een game-over animatie toe: speler tolsnel rond (360° in 0.5 seconde) voordat het scherm toont
