@@ -187,6 +187,9 @@
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
     const SPEED_BOOST_DURATION = 180;
+    let scoreMultiplier = 1;
+    let scoreMultiplierTimer = 0;
+    const SCORE_MULTIPLIER_DURATION = 1800;
 
     // Pauze
     let paused = false;
@@ -330,7 +333,8 @@
     }
 
     function spawnPowerUp() {
-      const type = Math.random() < 0.5 ? 'shield' : 'speed';
+      const r = Math.random();
+      const type = r < 0.33 ? 'shield' : r < 0.66 ? 'speed' : 'multiplier';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -346,7 +350,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -393,8 +397,9 @@
 
       scoreTimer++;
       if (scoreTimer >= 60) {
-        score++; scoreTimer = 0; scoreFlash = 12;
-        scorePops.push({ x: player.x + player.w / 2, y: player.y - 4, text: '+1', life: 50, maxLife: 50 });
+        score += scoreMultiplier; scoreTimer = 0; scoreFlash = 12;
+        const popText = scoreMultiplier > 1 ? '+' + scoreMultiplier : '+1';
+        scorePops.push({ x: player.x + player.w / 2, y: player.y - 4, text: popText, life: 50, maxLife: 50 });
         const newLevel = Math.floor(score / 10) + 1;
         if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2); }
         if (MILESTONES[score]) { milestoneBanner = MILESTONES[score]; milestoneBannerTimer = 120; playBeep(440, 0.15, 'triangle'); }
@@ -413,8 +418,9 @@
         if (coins[i].y > canvas.height) {
           coins.splice(i, 1);
         } else if (collides(player, coins[i])) {
-          score += 5;
-          scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+5', life: 60, maxLife: 60, big: true });
+          const coinGain = 5 * scoreMultiplier;
+          score += coinGain;
+          scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+' + coinGain, life: 60, maxLife: 60, big: true });
           playBeep(1047, 0.1, 'sine');
           coins.splice(i, 1);
         }
@@ -427,8 +433,10 @@
         else if (collides(player, powerUp)) {
           if (powerUp.type === 'shield') {
             invincible = true; invincibleTimer = INVINCIBLE_DURATION;
-          } else {
+          } else if (powerUp.type === 'speed') {
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
+          } else if (powerUp.type === 'multiplier') {
+            scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -450,6 +458,7 @@
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
+      if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
@@ -663,11 +672,49 @@
 
       // Power-up tekenen
       if (powerUp) {
-        ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
-        ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px sans-serif';
-        ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
+        if (powerUp.type === 'multiplier') {
+          ctx.save();
+          ctx.translate(powerUp.x + powerUp.w / 2, powerUp.y + powerUp.h / 2);
+          ctx.fillStyle = '#c060ff';
+          ctx.shadowColor = '#c060ff';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          for (let pt = 0; pt < 10; pt++) {
+            const angle = (pt * Math.PI) / 5 - Math.PI / 2;
+            const r = pt % 2 === 0 ? 10 : 4;
+            ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 7px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('x2', 0, 3);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.fillStyle = '#fff';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
+        }
+      }
+
+      // Multiplier balk onder speler
+      if (scoreMultiplier > 1) {
+        const barW = player.w + 8;
+        const barX = player.x - 4;
+        const barY = player.y + player.h + (invincible || speedBoost ? 12 : 4);
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barW, 4);
+        ctx.fillStyle = '#c060ff';
+        ctx.fillRect(barX, barY, barW * (scoreMultiplierTimer / SCORE_MULTIPLIER_DURATION), 4);
+        ctx.save();
+        ctx.fillStyle = '#c060ff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('x2', barX + barW + 3, barY + 4);
+        ctx.restore();
       }
 
       // Trail tekenen
