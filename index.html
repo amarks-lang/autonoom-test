@@ -131,6 +131,16 @@
       for (const s of stars) ctx.fillRect(s.x, s.y, s.size, s.size);
     }
 
+    // Muntjes
+    const coins = [];
+    let coinTimer = 0;
+    const COIN_INTERVAL = 200;
+
+    function spawnCoin() {
+      const size = 12;
+      coins.push({ x: Math.random() * (480 - size), y: -size, w: size, h: size, speed: 1.5 + Math.random() * 1.5 });
+    }
+
     // Particles
     const particles = [];
     function spawnParticles(x, y) {
@@ -336,7 +346,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -394,6 +404,21 @@
       // Power-up spawnen
       powerUpTimer++;
       if (powerUpTimer >= POWERUP_INTERVAL && !powerUp) { spawnPowerUp(); powerUpTimer = 0; }
+
+      // Muntjes spawnen, bewegen & ophalen
+      coinTimer++;
+      if (coinTimer >= COIN_INTERVAL) { spawnCoin(); coinTimer = 0; }
+      for (let i = coins.length - 1; i >= 0; i--) {
+        coins[i].y += coins[i].speed;
+        if (coins[i].y > canvas.height) {
+          coins.splice(i, 1);
+        } else if (collides(player, coins[i])) {
+          score += 5;
+          scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+5', life: 60, maxLife: 60, big: true });
+          playBeep(1047, 0.1, 'sine');
+          coins.splice(i, 1);
+        }
+      }
 
       // Power-up bewegen & ophalen
       if (powerUp) {
@@ -622,6 +647,18 @@
           ctx.fill();
           ctx.fillStyle = '#e44';
         }
+      }
+
+      // Muntjes tekenen (gele diamanten)
+      for (const coin of coins) {
+        ctx.save();
+        ctx.translate(coin.x + coin.w / 2, coin.y + coin.h / 2);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = '#ffe040';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(-coin.w / 2, -coin.h / 2, coin.w, coin.h);
+        ctx.restore();
       }
 
       // Power-up tekenen
