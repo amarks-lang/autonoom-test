@@ -540,7 +540,7 @@
         ctx.save();
         if (o.speed > 6) ctx.translate((Math.random() - 0.5) * 2, 0);
         ctx.shadowColor = glowMap[o.type] || '#e44';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = Math.min(10 + (level - 1) * 2, 20);
         ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
