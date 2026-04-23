@@ -142,6 +142,25 @@
       }
     }
 
+    // Confetti
+    const confetti = [];
+    const confettiMilestones = new Set();
+    const CONFETTI_SCORES = [25, 50, 75];
+    function spawnConfetti() {
+      const colors = ['#ff4','#f80','#f44','#f0f','#4ff','#0f8','#fff'];
+      for (let i = 0; i < 30; i++) {
+        confetti.push({
+          x: Math.random() * canvas.width,
+          y: -Math.random() * 20,
+          vx: (Math.random() - 0.5) * 2,
+          vy: 1.5 + Math.random() * 2.5,
+          size: 5 + Math.random() * 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: 90 + Math.random() * 60
+        });
+      }
+    }
+
     // Power-up
     let powerUp = null;
     let powerUpTimer = 0;
@@ -302,7 +321,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -354,6 +373,7 @@
         const newLevel = Math.floor(score / 10) + 1;
         if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2); }
         if (MILESTONES[score]) { milestoneBanner = MILESTONES[score]; milestoneBannerTimer = 120; playBeep(440, 0.15, 'triangle'); }
+        if (CONFETTI_SCORES.includes(score) && !confettiMilestones.has(score)) { confettiMilestones.add(score); spawnConfetti(); }
       }
 
       // Power-up spawnen
@@ -379,6 +399,12 @@
         const p = particles[i];
         p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
         if (p.life <= 0) particles.splice(i, 1);
+      }
+      // Confetti updaten
+      for (let i = confetti.length - 1; i >= 0; i--) {
+        const c = confetti[i];
+        c.x += c.vx; c.y += c.vy; c.life--;
+        if (c.life <= 0 || c.y > canvas.height) confetti.splice(i, 1);
       }
 
       // Invincibility aftellen
@@ -659,6 +685,14 @@
         ctx.globalAlpha = p.life / 50;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
+
+      // Confetti tekenen
+      for (const c of confetti) {
+        ctx.globalAlpha = Math.min(1, c.life / 30);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(c.x, c.y, c.size, c.size);
       }
       ctx.globalAlpha = 1;
 
