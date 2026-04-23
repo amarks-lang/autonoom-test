@@ -190,6 +190,9 @@
     let scoreMultiplier = 1;
     let scoreMultiplierTimer = 0;
     const SCORE_MULTIPLIER_DURATION = 1800;
+    let gameOverSpin = false;
+    let gameOverSpinTimer = 0;
+    const GAME_OVER_SPIN_DURATION = 30;
 
     // Pauze
     let paused = false;
@@ -350,7 +353,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -369,6 +372,14 @@
           introLetters++;
           introLetterTimer = 0;
         }
+        return;
+      }
+      if (gameOverSpin) {
+        player.rotation += (Math.PI * 2) / GAME_OVER_SPIN_DURATION;
+        gameOverSpinTimer--;
+        for (let i = explosionRings.length - 1; i >= 0; i--) { const ring = explosionRings[i]; ring.r += (ring.maxR - ring.r) * 0.06; ring.life--; if (ring.life <= 0) explosionRings.splice(i, 1); }
+        for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--; if (p.life <= 0) particles.splice(i, 1); }
+        if (gameOverSpinTimer <= 0) { gameOverSpin = false; gameOver = true; gameOverFlash = 30; }
         return;
       }
       if (gameOver || paused) return;
@@ -517,7 +528,7 @@
             obstacles.splice(i, 1);
             shakeTimer = SHAKE_DURATION;
             if (lives <= 0) {
-              gameOver = true; gameOverFlash = 30; stopBgMusic();
+              gameOverSpin = true; gameOverSpinTimer = GAME_OVER_SPIN_DURATION; stopBgMusic();
               const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
               explosionRings.push({ x: cx, y: cy, r: 10, maxR: 90, life: 60, maxLife: 60 });
               explosionRings.push({ x: cx, y: cy, r: 5, maxR: 140, life: 80, maxLife: 80 });
