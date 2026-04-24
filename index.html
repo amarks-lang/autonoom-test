@@ -15,7 +15,9 @@
     }
     #controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
     #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 4px; user-select: none; }
-    #btn-pause, #btn-mute { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
+    #btn-pause, #btn-mute, #btn-night { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
+    body.night-mode { background: #1a0030; }
+    body.night-mode canvas { border-color: #6633aa; }
     #dpad button { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; }
     #dpad button:active { background: #4af; }
     @keyframes skin-pulse {
@@ -67,6 +69,7 @@
     </div>
     <button id="btn-pause">⏸</button>
     <button id="btn-mute">🔊</button>
+    <button id="btn-night">🌙</button>
   </div>
   <script>
     const canvas = document.getElementById('c');
@@ -75,6 +78,7 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     let muted = false;
+    let nightMode = false;
 
     // Achtergrondmuziek: bas-puls die sneller tikt op hogere levels
     let bgBeatInterval = null;
@@ -202,9 +206,9 @@
       for (const s of starsBack) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
     }
     function drawStars() {
-      ctx.fillStyle = '#555';
+      ctx.fillStyle = nightMode ? '#442266' : '#555';
       for (const s of starsBack) ctx.fillRect(s.x, s.y, s.size, s.size);
-      ctx.fillStyle = '#aaa';
+      ctx.fillStyle = nightMode ? '#ffcc00' : '#aaa';
       for (const s of stars) ctx.fillRect(s.x, s.y, s.size, s.size);
     }
 
@@ -400,6 +404,15 @@
     function updateMuteIcon() { muteBtn.textContent = muted ? '🔇' : '🔊'; }
     muteBtn.addEventListener('click', () => { muted = !muted; updateMuteIcon(); });
     muteBtn.addEventListener('touchstart', e => { e.preventDefault(); muted = !muted; updateMuteIcon(); }, { passive: false });
+
+    const nightBtn = document.getElementById('btn-night');
+    function toggleNight() {
+      nightMode = !nightMode;
+      nightBtn.textContent = nightMode ? '☀️' : '🌙';
+      document.body.classList.toggle('night-mode', nightMode);
+    }
+    nightBtn.addEventListener('click', toggleNight);
+    nightBtn.addEventListener('touchstart', e => { e.preventDefault(); toggleNight(); }, { passive: false });
 
     function collides(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -866,10 +879,13 @@
       if (!gameStarted) { drawStartScreen(); return; }
       const level = Math.floor(score / 10) + 1;
       const t = Math.min((level - 1) / 9, 1);
-      const r = Math.round(t * 80);
-      const g = Math.round((1 - t) * 10);
-      const b = Math.round((1 - t) * 60);
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      let bgR, bgG, bgB;
+      if (nightMode) {
+        bgR = Math.round(20 + t * 50); bgG = 0; bgB = Math.round(40 + t * 40);
+      } else {
+        bgR = Math.round(t * 80); bgG = Math.round((1 - t) * 10); bgB = Math.round((1 - t) * 60);
+      }
+      ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const shakeX = shakeTimer > 0 ? (Math.random() - 0.5) * 6 * (shakeTimer / SHAKE_DURATION) : 0;
       const shakeY = shakeTimer > 0 ? (Math.random() - 0.5) * 4 * (shakeTimer / SHAKE_DURATION) : 0;
@@ -1033,7 +1049,7 @@
       }
       ctx.globalAlpha = 1;
 
-      player.color = skinColor;
+      player.color = nightMode ? '#ffcc00' : skinColor;
 
       // Speler knippert als invincible of geraakt
       const blinkHit = hitInvincible && Math.floor(hitInvincibleTimer / 5) % 2 === 0;
