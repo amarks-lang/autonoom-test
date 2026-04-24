@@ -34,11 +34,23 @@
       100% { transform: translateX(0); }
     }
     .skin-levelup { animation: skin-shake 0.45s ease-in-out; }
+    #canvas-wrap { position: relative; display: inline-block; }
+    #name-entry { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.93); border:2px solid #4af; border-radius:12px; padding:14px 18px; text-align:center; z-index:10; }
+    #name-entry p { margin:0 0 8px; font-size:13px; color:#4af; }
+    #name-entry input { background:#222; border:1px solid #4af; border-radius:6px; color:#fff; font-size:16px; padding:5px 8px; width:130px; outline:none; }
+    #name-entry button { background:#4af; border:none; border-radius:6px; color:#000; font-size:15px; font-weight:bold; padding:6px 12px; cursor:pointer; margin-left:6px; }
   </style>
 </head>
 <body>
   <h1>Blok Renner</h1>
-  <canvas id="c" width="480" height="200"></canvas>
+  <div id="canvas-wrap">
+    <canvas id="c" width="480" height="200"></canvas>
+    <div id="name-entry">
+      <p>Voer je naam in voor de topscore:</p>
+      <input type="text" id="player-name" maxlength="12" placeholder="Naam">
+      <button id="name-submit">✓</button>
+    </div>
+  </div>
   <p id="info">Gebruik pijltjestoetsen of knoppen om te bewegen</p>
   <div id="skin-select" style="display:flex;gap:8px;align-items:center;margin:4px 0;font-size:13px;color:#aaa;">
     <span>Kleur:</span>
@@ -112,15 +124,34 @@
     let bestTime = parseInt(localStorage.getItem('blokrenner_bt') || '0');
     let isNewBestTime = false;
     function loadHighscores() {
-      try { return JSON.parse(localStorage.getItem('blokrenner_top3') || '[]'); } catch(e) { return []; }
+      try {
+        const raw = JSON.parse(localStorage.getItem('blokrenner_top3') || '[]');
+        return raw.map(e => typeof e === 'object' ? e : { name: '???', score: e });
+      } catch(e) { return []; }
     }
-    function saveHighscores(sc) {
+    function saveHighscores(name, sc) {
       const list = loadHighscores();
-      list.push(sc);
-      list.sort((a, b) => b - a);
+      list.push({ name: name || '???', score: sc });
+      list.sort((a, b) => b.score - a.score);
       const top3 = list.slice(0, 3);
       localStorage.setItem('blokrenner_top3', JSON.stringify(top3));
     }
+    let pendingScore = 0;
+    const nameEntryEl = document.getElementById('name-entry');
+    const playerNameInput = document.getElementById('player-name');
+    function showNameEntry(sc) {
+      pendingScore = sc;
+      playerNameInput.value = '';
+      nameEntryEl.style.display = 'block';
+      setTimeout(() => playerNameInput.focus(), 50);
+    }
+    function submitName() {
+      const name = playerNameInput.value.trim() || '???';
+      saveHighscores(name, pendingScore);
+      nameEntryEl.style.display = 'none';
+    }
+    document.getElementById('name-submit').addEventListener('click', submitName);
+    playerNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); submitName(); } });
     // Dagelijkse uitdaging
     function getDailyChallenge() {
       const now = new Date();
@@ -676,7 +707,7 @@
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
               const survivedSecs = Math.floor(sessionTimer / 60);
               if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
-              saveHighscores(score);
+              showNameEntry(score);
             } else {
               hitInvincible = true;
               hitInvincibleTimer = HIT_INVINCIBLE_DURATION;
@@ -708,9 +739,9 @@
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText('Top scores:', canvas.width / 2, canvas.height / 2 + 16);
         ctx.font = '13px sans-serif';
-        top3.forEach((s, i) => {
+        top3.forEach((e, i) => {
           const medals = ['🥇','🥈','🥉'];
-          ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 30 + i * 15);
+          ctx.fillText(medals[i] + ' ' + e.name + ': ' + e.score, canvas.width / 2, canvas.height / 2 + 30 + i * 15);
         });
       }
 
