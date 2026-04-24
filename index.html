@@ -258,6 +258,20 @@
     let introLetterTimer = 0;
     const INTRO_TITLE = 'Blok Renner';
 
+    // Achievements
+    const achievementQueue = [];
+    let achievementTimer = 0;
+    const ACHIEVEMENT_DURATION = 150;
+    const achievementsUnlocked = new Set();
+    let sessionCoinCount = 0;
+
+    function triggerAchievement(id, text) {
+      if (achievementsUnlocked.has(id)) return;
+      achievementsUnlocked.add(id);
+      achievementQueue.push(text);
+      if (achievementTimer === 0 && achievementQueue.length === 1) achievementTimer = ACHIEVEMENT_DURATION;
+    }
+
     function spawnObstacle() {
       const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
       const type = types[Math.floor(Math.random() * types.length)];
@@ -388,6 +402,7 @@
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
+      achievementsUnlocked.clear(); achievementQueue.length = 0; achievementTimer = 0; sessionCoinCount = 0;
       if (shopShield) { invincible = true; invincibleTimer = INVINCIBLE_DURATION; shopShield = false; }
       if (shopExtraLife) { lives = 4; shopExtraLife = false; }
     }
@@ -443,6 +458,7 @@
       }
 
       sessionTimer++;
+      if (sessionTimer === 1800) triggerAchievement('survive30', '⏱ 30 seconden overleefd!');
       scoreTimer++;
       if (scoreTimer >= 60) {
         score += scoreMultiplier; scoreTimer = 0; scoreFlash = 12;
@@ -473,6 +489,8 @@
           score += coinGain;
           totalCoins++;
           localStorage.setItem('blokrenner_coins', totalCoins);
+          sessionCoinCount++;
+          if (sessionCoinCount === 10) triggerAchievement('coins10', '🪙 10 muntjes verzameld!');
           scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+' + coinGain, life: 60, maxLife: 60, big: true });
           playBeep(1047, 0.1, 'sine');
           coins.splice(i, 1);
@@ -521,6 +539,8 @@
       if (levelBannerTimer > 0) levelBannerTimer--;
       if (milestoneBannerTimer > 0) milestoneBannerTimer--;
       if (bossWarningTimer > 0) { bossWarningTimer--; if (bossWarningTimer === 0) spawnBoss(); }
+      if (achievementTimer > 0) { achievementTimer--; }
+      else if (achievementQueue.length > 0) { achievementQueue.shift(); if (achievementQueue.length > 0) achievementTimer = ACHIEVEMENT_DURATION; }
       if (levelFlash > 0) levelFlash--;
       if (gameOverFlash > 0) gameOverFlash--;
       if (shakeTimer > 0) shakeTimer--;
@@ -553,6 +573,7 @@
             comboCount = comboTimer > 0 ? comboCount + 1 : 1;
             comboTimer = COMBO_WINDOW;
             if (comboCount >= 2) {
+              triggerAchievement('firstcombo', '🔥 Eerste combo!');
               const bonus = comboCount * 2;
               score += bonus;
               comboDisplay = `COMBO x${comboCount}! +${bonus}`;
@@ -1098,6 +1119,23 @@
         ctx.restore();
         ctx.globalAlpha = 1;
         ctx.textAlign = 'left';
+      }
+
+      if (achievementTimer > 0 && achievementQueue.length > 0) {
+        const fadeIn = ACHIEVEMENT_DURATION - achievementTimer;
+        const alpha = fadeIn < 20 ? fadeIn / 20 : achievementTimer < 30 ? achievementTimer / 30 : 1;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(255,200,0,0.92)';
+        const aw = 220, ah = 30, ax = canvas.width / 2 - aw / 2, ay = 50;
+        ctx.beginPath();
+        ctx.roundRect(ax, ay, aw, ah, 8);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏆 ' + achievementQueue[0], canvas.width / 2, ay + 20);
+        ctx.restore();
       }
 
       if (bossWarningTimer > 0) {
