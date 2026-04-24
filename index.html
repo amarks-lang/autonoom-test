@@ -208,6 +208,26 @@
     const skinColors = ['#4af', '#f80', '#0f8'];
     let skinColor = skinColors[0];
 
+    // Boss-systeem
+    const bossLevelsSpawned = new Set();
+    let bossWarningTimer = 0;
+    const BOSS_WARNING_DURATION = 180;
+
+    function spawnBoss() {
+      const w = 60, h = 60;
+      obstacles.push({
+        x: canvas.width / 2 - w / 2,
+        y: -h,
+        w, h,
+        speed: 1.2,
+        warn: false,
+        type: 'boss',
+        rotation: 0,
+        rotSpeed: 0.015
+      });
+      playBeep(120, 0.6, 'sawtooth');
+    }
+
     // Combo-systeem
     let comboCount = 0;
     let comboTimer = 0;
@@ -359,6 +379,7 @@
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
+      bossLevelsSpawned.clear(); bossWarningTimer = 0;
     }
 
     document.addEventListener('keydown', e => {
@@ -418,7 +439,10 @@
         const popText = scoreMultiplier > 1 ? '+' + scoreMultiplier : '+1';
         scorePops.push({ x: player.x + player.w / 2, y: player.y - 4, text: popText, life: 50, maxLife: 50 });
         const newLevel = Math.floor(score / 10) + 1;
-        if (newLevel > lastLevel) { lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2); }
+        if (newLevel > lastLevel) {
+          lastLevel = newLevel; levelBanner = 'LEVEL ' + newLevel + '!'; levelBannerTimer = 120; levelFlash = 22; playBeep(523, 0.2);
+          if (newLevel % 5 === 0 && !bossLevelsSpawned.has(newLevel)) { bossLevelsSpawned.add(newLevel); bossWarningTimer = BOSS_WARNING_DURATION; }
+        }
         if (MILESTONES[score]) { milestoneBanner = MILESTONES[score]; milestoneBannerTimer = 120; playBeep(440, 0.15, 'triangle'); }
         if (CONFETTI_SCORES.includes(score) && !confettiMilestones.has(score)) { confettiMilestones.add(score); spawnConfetti(); }
       }
@@ -484,6 +508,7 @@
       if (comboDisplayTimer > 0) comboDisplayTimer--;
       if (levelBannerTimer > 0) levelBannerTimer--;
       if (milestoneBannerTimer > 0) milestoneBannerTimer--;
+      if (bossWarningTimer > 0) { bossWarningTimer--; if (bossWarningTimer === 0) spawnBoss(); }
       if (levelFlash > 0) levelFlash--;
       if (gameOverFlash > 0) gameOverFlash--;
       if (shakeTimer > 0) shakeTimer--;
@@ -671,6 +696,20 @@
             ctx.lineTo(o.x + zW * (z + 1), o.y + o.h / 2);
           }
           ctx.stroke();
+        } else if (o.type === 'boss') {
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 24 + 10 * Math.sin(Date.now() / 120);
+          ctx.fillStyle = '#cc0000';
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#ff4444';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(o.x + 3, o.y + 3, o.w - 6, o.h - 6);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('BOSS', o.x + o.w / 2, o.y + o.h / 2 + 6);
+          ctx.textAlign = 'left';
         } else {
           ctx.fillRect(o.x, o.y, o.w, o.h);
         }
@@ -961,6 +1000,26 @@
         ctx.restore();
         ctx.globalAlpha = 1;
         ctx.textAlign = 'left';
+      }
+
+      if (bossWarningTimer > 0) {
+        const blink = Math.floor(bossWarningTimer / 12) % 2 === 0;
+        if (blink) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(180,0,0,0.25)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff2222';
+          ctx.font = 'bold 26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 16;
+          ctx.fillText('⚠ BOSS NADERT! ⚠', canvas.width / 2, canvas.height / 2);
+          ctx.font = '14px sans-serif';
+          ctx.fillStyle = '#ffaaaa';
+          ctx.shadowBlur = 0;
+          ctx.fillText(Math.ceil(bossWarningTimer / 60) + 's', canvas.width / 2, canvas.height / 2 + 24);
+          ctx.restore();
+        }
       }
 
       if (paused && !gameOver) {
