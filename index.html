@@ -617,6 +617,16 @@
           }
           scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+' + coinGain, life: 60, maxLife: 60, big: true });
           playBeep(1047, 0.1, 'sine');
+          // Ster-burst bij ophalen muntje
+          for (let s = 0; s < 12; s++) {
+            const angle = (s / 12) * Math.PI * 2;
+            const spd = 1.2 + Math.random() * 2.5;
+            coinTrails.push({
+              x: coins[i].x + coins[i].w / 2, y: coins[i].y + coins[i].h / 2,
+              vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd - 0.6,
+              size: 2.5 + Math.random() * 3, life: 22 + Math.random() * 14
+            });
+          }
           coins.splice(i, 1);
         }
       }
