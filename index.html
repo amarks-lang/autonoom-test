@@ -18,6 +18,11 @@
     #btn-pause, #btn-mute { width: 60px; height: 60px; background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; align-self: center; }
     #dpad button { background: #333; border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 24px; cursor: pointer; touch-action: none; }
     #dpad button:active { background: #4af; }
+    @keyframes skin-pulse {
+      0%, 100% { box-shadow: 0 0 6px 3px currentColor; transform: scale(1); }
+      50%       { box-shadow: 0 0 14px 6px currentColor; transform: scale(1.12); }
+    }
+    .skin-selected { animation: skin-pulse 0.9s ease-in-out infinite; border: 3px solid #fff !important; }
   </style>
 </head>
 <body>
@@ -1240,11 +1245,12 @@
     const skinSelectDiv = document.getElementById('skin-select');
     skinColors.forEach((color, i) => {
       const btn = document.createElement('div');
-      btn.style.cssText = `width:22px;height:22px;background:${color};border-radius:4px;cursor:pointer;border:3px solid ${i===0?'#fff':'transparent'};`;
+      btn.style.cssText = `width:22px;height:22px;background:${color};border-radius:4px;cursor:pointer;color:${color};`;
+      if (i === 0) btn.classList.add('skin-selected');
       btn.addEventListener('click', () => {
         skinColor = color;
         skinSelectDiv.querySelectorAll('div').forEach((d, j) => {
-          d.style.border = `3px solid ${j === i ? '#fff' : 'transparent'}`;
+          d.classList.toggle('skin-selected', j === i);
         });
       });
       skinSelectDiv.appendChild(btn);
