@@ -243,7 +243,9 @@
         w, h,
         speed: spd,
         warn: spd > 5,
-        type
+        type,
+        rotation: 0,
+        rotSpeed: (Math.random() - 0.5) * 0.06
       };
       if (type === 'zigzag') {
         obs.zigzagSpeed = 2 + Math.random() * 2;
@@ -504,6 +506,7 @@
             }
           }
         }
+        obstacles[i].rotation += obstacles[i].rotSpeed;
         if (obstacles[i].horizontal
             ? (obstacles[i].x > canvas.width + obstacles[i].w || obstacles[i].x < -obstacles[i].w * 2)
             : obstacles[i].y > canvas.height) {
@@ -627,6 +630,11 @@
       }
       ctx.fillStyle = '#e44';
       for (const o of obstacles) {
+        const ocx = o.x + o.w / 2, ocy = o.y + o.h / 2;
+        ctx.save();
+        ctx.translate(ocx, ocy);
+        ctx.rotate(o.rotation);
+        ctx.translate(-ocx, -ocy);
         // schaduw
         ctx.save();
         ctx.globalAlpha = 0.25;
@@ -667,6 +675,7 @@
           ctx.fillRect(o.x, o.y, o.w, o.h);
         }
         ctx.restore();
+        ctx.restore(); // sluit rotatie-context
         if (o.warn && o.y < 20) {
           ctx.fillStyle = '#f80';
           ctx.beginPath();
