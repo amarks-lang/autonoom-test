@@ -105,6 +105,14 @@
       const top3 = list.slice(0, 3);
       localStorage.setItem('blokrenner_top3', JSON.stringify(top3));
     }
+    // Winkel
+    let totalCoins = parseInt(localStorage.getItem('blokrenner_coins') || '0');
+    let shopOpen = false;
+    let shopShield = false;
+    let shopExtraLife = false;
+    const SHOP_SHIELD_COST = 10;
+    const SHOP_LIFE_COST = 20;
+
     let lives = 3;
     let hitInvincible = false;
     let hitInvincibleTimer = 0;
@@ -380,6 +388,8 @@
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
+      if (shopShield) { invincible = true; invincibleTimer = INVINCIBLE_DURATION; shopShield = false; }
+      if (shopExtraLife) { lives = 4; shopExtraLife = false; }
     }
 
     document.addEventListener('keydown', e => {
@@ -461,6 +471,8 @@
         } else if (collides(player, coins[i])) {
           const coinGain = 5 * scoreMultiplier;
           score += coinGain;
+          totalCoins++;
+          localStorage.setItem('blokrenner_coins', totalCoins);
           scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+' + coinGain, life: 60, maxLife: 60, big: true });
           playBeep(1047, 0.1, 'sine');
           coins.splice(i, 1);
@@ -605,22 +617,108 @@
         });
       }
 
+      // Muntjes teller
+      ctx.fillStyle = '#ffe040';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🪙 ' + totalCoins + ' muntjes', canvas.width / 2, canvas.height / 2 + 68);
+
       // Start knop
-      const bx = canvas.width / 2 - 70, by = canvas.height / 2 + 75, bw = 140, bh = 40;
+      const bx = canvas.width / 2 - 70, by = canvas.height / 2 + 80, bw = 110, bh = 36;
       ctx.fillStyle = '#4af';
       ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = '#000';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('START', canvas.width / 2, by + 28);
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('START', bx + bw / 2, by + 25);
+
+      // Winkel knop
+      const wx = bx + bw + 8, wy = by, ww = 44, wh = 36;
+      ctx.fillStyle = '#f80';
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.fillStyle = '#000';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('🛒', wx + ww / 2, wy + 26);
       ctx.textAlign = 'left';
+
+      // Winkel overlay
+      if (shopOpen) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+        ctx.strokeStyle = '#f80';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+        ctx.fillStyle = '#f80';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🛒 Winkel', canvas.width / 2, 50);
+        ctx.fillStyle = '#ffe040';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('Muntjes: ' + totalCoins, canvas.width / 2, 68);
+
+        // Item 1: Startschild
+        const canShield = totalCoins >= SHOP_SHIELD_COST;
+        ctx.fillStyle = shopShield ? '#0f8' : (canShield ? '#4af' : '#555');
+        ctx.fillRect(40, 82, canvas.width - 80, 38);
+        ctx.fillStyle = shopShield ? '#000' : '#fff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(shopShield ? '✓ Startschild actief' : 'Startschild — ' + SHOP_SHIELD_COST + ' 🪙', canvas.width / 2, 97);
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = shopShield ? '#000' : '#aaa';
+        ctx.fillText('Begin de ronde met een schild', canvas.width / 2, 111);
+
+        // Item 2: Extra leven
+        const canLife = totalCoins >= SHOP_LIFE_COST + (shopShield ? SHOP_SHIELD_COST : 0);
+        const lifeAffordable = totalCoins >= SHOP_LIFE_COST;
+        ctx.fillStyle = shopExtraLife ? '#0f8' : (lifeAffordable ? '#f44' : '#555');
+        ctx.fillRect(40, 130, canvas.width - 80, 38);
+        ctx.fillStyle = shopExtraLife ? '#000' : '#fff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(shopExtraLife ? '✓ Extra leven actief' : 'Extra leven — ' + SHOP_LIFE_COST + ' 🪙', canvas.width / 2, 145);
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = shopExtraLife ? '#000' : '#aaa';
+        ctx.fillText('Begin de ronde met 4 levens', canvas.width / 2, 159);
+
+        // Sluit knop
+        ctx.fillStyle = '#333';
+        ctx.fillRect(canvas.width / 2 - 40, 178, 80, 28);
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('Sluiten', canvas.width / 2, 196);
+        ctx.textAlign = 'left';
+      }
 
       // Klik op knop
       canvas.onclick = (e) => {
         const r = canvas.getBoundingClientRect();
-        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        const mx = (e.clientX - r.left) * (canvas.width / r.width);
+        const my = (e.clientY - r.top) * (canvas.height / r.height);
+        if (shopOpen) {
+          // Item 1 klik
+          if (mx >= 40 && mx <= canvas.width - 40 && my >= 82 && my <= 120) {
+            if (!shopShield && totalCoins >= SHOP_SHIELD_COST) {
+              shopShield = true; totalCoins -= SHOP_SHIELD_COST;
+              localStorage.setItem('blokrenner_coins', totalCoins);
+            } else if (shopShield) { shopShield = false; totalCoins += SHOP_SHIELD_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
+          }
+          // Item 2 klik
+          if (mx >= 40 && mx <= canvas.width - 40 && my >= 130 && my <= 168) {
+            if (!shopExtraLife && totalCoins >= SHOP_LIFE_COST) {
+              shopExtraLife = true; totalCoins -= SHOP_LIFE_COST;
+              localStorage.setItem('blokrenner_coins', totalCoins);
+            } else if (shopExtraLife) { shopExtraLife = false; totalCoins += SHOP_LIFE_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
+          }
+          // Sluiten klik
+          if (mx >= canvas.width / 2 - 40 && mx <= canvas.width / 2 + 40 && my >= 178 && my <= 206) {
+            shopOpen = false;
+          }
+          return;
+        }
         if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
           gameStarted = true; startBgMusic();
           canvas.onclick = null;
+        }
+        if (mx >= wx && mx <= wx + ww && my >= wy && my <= wy + wh) {
+          shopOpen = true;
         }
       };
     }
