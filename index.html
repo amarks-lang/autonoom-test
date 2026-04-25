@@ -276,6 +276,11 @@
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
 
+    // Slow motion power-up
+    let slowMo = false;
+    let slowMoTimer = 0;
+    const SLOW_MO_DURATION = 180;
+
     // Dodge streak
     let dodgeStreak = 0;
 
@@ -502,7 +507,7 @@
 
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.33 ? 'shield' : r < 0.66 ? 'speed' : 'multiplier';
+      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -521,6 +526,7 @@
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
       dodgeStreak = 0;
+      slowMo = false; slowMoTimer = 0;
       achievementsUnlocked.clear(); achievementQueue.length = 0; achievementTimer = 0; sessionCoinCount = 0; coinTrails.length = 0;
       dailyChallenge = getDailyChallenge(); dailyChallengeCompleted = dailyChallenge.completed;
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
@@ -681,6 +687,8 @@
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           } else if (powerUp.type === 'multiplier') {
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
+          } else if (powerUp.type === 'slowmo') {
+            slowMo = true; slowMoTimer = SLOW_MO_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -708,6 +716,7 @@
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
+      if (slowMo) { slowMoTimer--; if (slowMoTimer <= 0) { slowMo = false; playFallingSweep(); } }
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
@@ -727,15 +736,16 @@
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
 
+      const slowFactor = slowMo ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
         if (obstacles[i].horizontal) {
-          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
-          obstacles[i].y += (Math.random() - 0.5) * 1.5;
+          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
+          obstacles[i].y += (Math.random() - 0.5) * 1.5 * slowFactor;
           obstacles[i].y = Math.max(0, Math.min(canvas.height - obstacles[i].h, obstacles[i].y));
         } else {
-          obstacles[i].y += obstacles[i].speed;
+          obstacles[i].y += obstacles[i].speed * slowFactor;
           if (obstacles[i].type === 'zigzag') {
-            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
             if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
               obstacles[i].zigzagDir *= -1;
               obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
@@ -1101,6 +1111,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('x2', 0, 3);
           ctx.restore();
+        } else if (powerUp.type === 'slowmo') {
+          ctx.save();
+          ctx.fillStyle = '#66eeff';
+          ctx.shadowColor = '#00ccff';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('S', powerUp.x + powerUp.w / 2, powerUp.y + 14);
+          ctx.restore();
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1288,6 +1309,18 @@
         }
         ctx.fillStyle = heartColor;
         ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+      }
+
+      // Slow-mo HUD indicator
+      if (slowMo) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(100,220,255,0.18)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#66eeff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('🐢 SLOW-MO ' + Math.ceil(slowMoTimer / 60) + 's', 10, 32);
+        ctx.restore();
       }
 
       // Dodge streak HUD
