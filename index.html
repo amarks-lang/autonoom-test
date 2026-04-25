@@ -46,7 +46,7 @@
 <body>
   <h1>Blok Renner</h1>
   <div id="canvas-wrap">
-    <canvas id="c" width="480" height="200"></canvas>
+    <canvas id="c" width="640" height="300"></canvas>
     <div id="name-entry">
       <p>Voer je naam in voor de topscore:</p>
       <input type="text" id="player-name" maxlength="12" placeholder="Naam">
@@ -114,7 +114,7 @@
       osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
-    const player = { x: 40, y: 140, w: 30, h: 30, speed: 4, color: '#4af', rotation: 0, rotVel: 0 };
+    const player = { x: 40, y: 220, w: 30, h: 30, speed: 4, color: '#4af', rotation: 0, rotVel: 0 };
 
     const obstacles = [];
     let spawnTimer = 0;
@@ -190,20 +190,20 @@
 
     // Sterren achtergrond (twee lagen voor parallax)
     const stars = Array.from({ length: 60 }, () => ({
-      x: Math.random() * 480,
-      y: Math.random() * 200,
+      x: Math.random() * 640,
+      y: Math.random() * 300,
       size: 1 + Math.random() * 2,
       speed: 0.3 + Math.random() * 0.7
     }));
     const starsBack = Array.from({ length: 35 }, () => ({
-      x: Math.random() * 480,
-      y: Math.random() * 200,
+      x: Math.random() * 640,
+      y: Math.random() * 300,
       size: 0.5 + Math.random() * 1,
       speed: 0.1 + Math.random() * 0.2
     }));
     function updateStars() {
-      for (const s of stars) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
-      for (const s of starsBack) { s.y += s.speed; if (s.y > 200) { s.y = 0; s.x = Math.random() * 480; } }
+      for (const s of stars) { s.y += s.speed; if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; } }
+      for (const s of starsBack) { s.y += s.speed; if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; } }
     }
     function drawStars() {
       ctx.fillStyle = nightMode ? '#442266' : '#555';
@@ -220,7 +220,7 @@
 
     function spawnCoin() {
       const size = 12;
-      coins.push({ x: Math.random() * (480 - size), y: -size, w: size, h: size, speed: 1.5 + Math.random() * 1.5 });
+      coins.push({ x: Math.random() * (canvas.width - size), y: -size, w: size, h: size, speed: 1.5 + Math.random() * 1.5 });
     }
 
     // Particles
@@ -470,7 +470,7 @@
     }
 
     function reset() {
-      player.x = 40; player.y = 140; player.rotation = 0; player.rotVel = 0;
+      player.x = 40; player.y = 220; player.rotation = 0; player.rotVel = 0;
       obstacles.length = 0;
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
