@@ -1210,8 +1210,9 @@
       }
       const flashScale = scoreFlash > 0 ? 1 + 0.5 * (scoreFlash / 12) : 1;
       const flashColor = scoreFlash > 0 ? '#ff0' : '#fff';
+      const scoreShakeX = scoreFlash > 0 ? Math.sin(scoreFlash * 2.2) * 4 * (scoreFlash / 12) : 0;
       ctx.save();
-      ctx.translate(8 + 30, 14);
+      ctx.translate(8 + 30 + scoreShakeX, 14);
       ctx.scale(flashScale, flashScale);
       ctx.fillStyle = flashColor;
       ctx.font = `bold ${Math.round(16 * flashScale)}px sans-serif`;
