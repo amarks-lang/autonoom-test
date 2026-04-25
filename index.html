@@ -25,6 +25,11 @@
       50%       { box-shadow: 0 0 14px 6px currentColor; transform: scale(1.12); }
     }
     .skin-selected { animation: skin-pulse 0.9s ease-in-out infinite; border: 3px solid #fff !important; }
+    @keyframes heart-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
     @keyframes skin-shake {
       0%   { transform: translateX(0); }
       15%  { transform: translateX(-6px) rotate(-4deg); }
@@ -278,6 +283,9 @@
 
     // Sessie top-3 scores
     const sessionScores = [];
+
+    // Hartjes puls-teller voor 1 leven
+    let lowLifePulse = 0;
 
     // Slow motion power-up
     let slowMo = false;
@@ -738,6 +746,7 @@
       if (scoreFlash > 0) scoreFlash--;
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
+      if (lives === 1) lowLifePulse++; else lowLifePulse = 0;
 
       const slowFactor = slowMo ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -1305,7 +1314,12 @@
       for (let i = 0; i < 3; i++) {
         let heartColor;
         if (i < lives) {
-          heartColor = '#f44';
+          if (lives === 1 && i === 0) {
+            const pulseOn = Math.floor(lowLifePulse / 10) % 2 === 0;
+            heartColor = pulseOn ? '#ff2222' : '#ff9999';
+          } else {
+            heartColor = '#f44';
+          }
         } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
           heartColor = '#f44';
         } else {
