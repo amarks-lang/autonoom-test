@@ -25,6 +25,11 @@
       50%       { box-shadow: 0 0 14px 6px currentColor; transform: scale(1.12); }
     }
     .skin-selected { animation: skin-pulse 0.9s ease-in-out infinite; border: 3px solid #fff !important; }
+    @keyframes heart-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
     @keyframes skin-shake {
       0%   { transform: translateX(0); }
       15%  { transform: translateX(-6px) rotate(-4deg); }
@@ -276,6 +281,20 @@
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
 
+    // Sessie top-3 scores
+    const sessionScores = [];
+
+    // Hartjes puls-teller voor 1 leven
+    let lowLifePulse = 0;
+
+    // Slow motion power-up
+    let slowMo = false;
+    let slowMoTimer = 0;
+    const SLOW_MO_DURATION = 180;
+
+    // Dodge streak
+    let dodgeStreak = 0;
+
     // Pauze
     let paused = false;
     let playerIdleTimer = 0;
@@ -284,7 +303,7 @@
     const scorePops = [];
     const explosionRings = [];
     const trail = [];
-    const skinColors = ['#4af', '#f80', '#0f8'];
+    const skinColors = ['#4af', '#f80', '#0f8', '#b44fff', '#ff4faa'];
     let skinColor = skinColors[0];
 
     // Boss-systeem
@@ -499,7 +518,7 @@
 
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.33 ? 'shield' : r < 0.66 ? 'speed' : 'multiplier';
+      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -517,6 +536,8 @@
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
+      dodgeStreak = 0;
+      slowMo = false; slowMoTimer = 0;
       achievementsUnlocked.clear(); achievementQueue.length = 0; achievementTimer = 0; sessionCoinCount = 0; coinTrails.length = 0;
       dailyChallenge = getDailyChallenge(); dailyChallengeCompleted = dailyChallenge.completed;
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
@@ -677,6 +698,8 @@
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           } else if (powerUp.type === 'multiplier') {
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
+          } else if (powerUp.type === 'slowmo') {
+            slowMo = true; slowMoTimer = SLOW_MO_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -704,6 +727,7 @@
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
+      if (slowMo) { slowMoTimer--; if (slowMoTimer <= 0) { slowMo = false; playFallingSweep(); } }
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
@@ -722,16 +746,18 @@
       if (scoreFlash > 0) scoreFlash--;
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
+      if (lives === 1) lowLifePulse++; else lowLifePulse = 0;
 
+      const slowFactor = slowMo ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
         if (obstacles[i].horizontal) {
-          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
-          obstacles[i].y += (Math.random() - 0.5) * 1.5;
+          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
+          obstacles[i].y += (Math.random() - 0.5) * 1.5 * slowFactor;
           obstacles[i].y = Math.max(0, Math.min(canvas.height - obstacles[i].h, obstacles[i].y));
         } else {
-          obstacles[i].y += obstacles[i].speed;
+          obstacles[i].y += obstacles[i].speed * slowFactor;
           if (obstacles[i].type === 'zigzag') {
-            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
             if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
               obstacles[i].zigzagDir *= -1;
               obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
@@ -770,8 +796,10 @@
               else playBeep(880, 0.1);
             }
           }
+          dodgeStreak++;
           obstacles.splice(i, 1);
         } else if (!invincible && !hitInvincible && collides(player, obstacles[i])) {
+            dodgeStreak = 0;
             lives--;
             heartBlinkIndex = lives;
             heartBlinkTimer = 30;
@@ -787,6 +815,7 @@
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
               const survivedSecs = Math.floor(sessionTimer / 60);
               if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
+              sessionScores.push(score);
               showNameEntry(score);
             } else {
               hitInvincible = true;
@@ -1095,6 +1124,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('x2', 0, 3);
           ctx.restore();
+        } else if (powerUp.type === 'slowmo') {
+          ctx.save();
+          ctx.fillStyle = '#66eeff';
+          ctx.shadowColor = '#00ccff';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('S', powerUp.x + powerUp.w / 2, powerUp.y + 14);
+          ctx.restore();
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1274,7 +1314,12 @@
       for (let i = 0; i < 3; i++) {
         let heartColor;
         if (i < lives) {
-          heartColor = '#f44';
+          if (lives === 1 && i === 0) {
+            const pulseOn = Math.floor(lowLifePulse / 10) % 2 === 0;
+            heartColor = pulseOn ? '#ff2222' : '#ff9999';
+          } else {
+            heartColor = '#f44';
+          }
         } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
           heartColor = '#f44';
         } else {
@@ -1282,6 +1327,28 @@
         }
         ctx.fillStyle = heartColor;
         ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+      }
+
+      // Slow-mo HUD indicator
+      if (slowMo) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(100,220,255,0.18)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#66eeff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('🐢 SLOW-MO ' + Math.ceil(slowMoTimer / 60) + 's', 10, 32);
+        ctx.restore();
+      }
+
+      // Dodge streak HUD
+      if (dodgeStreak > 0) {
+        ctx.save();
+        ctx.fillStyle = dodgeStreak >= 10 ? '#f80' : dodgeStreak >= 5 ? '#ff0' : '#aaa';
+        ctx.font = `bold ${dodgeStreak >= 10 ? 13 : 11}px sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.fillText('🔥 ' + dodgeStreak + ' streak', canvas.width - 8, 36);
+        ctx.restore();
       }
 
       // Dagelijkse uitdaging balk (onderin)
@@ -1478,10 +1545,24 @@
         }
         ctx.fillStyle = '#ff0';
         ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 35);
+        // Sessie top-3
+        if (sessionScores.length > 0) {
+          const top3sess = [...sessionScores].sort((a, b) => b - a).slice(0, 3);
+          const medals = ['🥇','🥈','🥉'];
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillStyle = '#aef';
+          ctx.fillText('Deze sessie:', canvas.width / 2, canvas.height / 2 + 50);
+          ctx.font = '11px sans-serif';
+          top3sess.forEach((s, i) => {
+            ctx.fillStyle = i === 0 ? '#ffd700' : '#ccc';
+            ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 63 + i * 13);
+          });
+        }
         ctx.fillStyle = '#fff';
-        ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 55);
+        ctx.font = '14px sans-serif';
+        ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 106);
         // Opnieuw-knop op canvas
-        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65, rbw = 120, rbh = 34;
+        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 112, rbw = 120, rbh = 30;
         ctx.fillStyle = '#4af';
         ctx.beginPath();
         ctx.roundRect(rbx, rby, rbw, rbh, 6);

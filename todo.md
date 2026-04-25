@@ -1,7 +1,7 @@
 # Game Taken
 
-1. Voeg een "dodge streak" teller toe in de HUD: tel hoeveel obstakels op rij vermeden, reset bij treffer
-2. Voeg 2 extra skin kleuren toe aan de kleurenkiezer (paars en roze)
-3. Voeg een "slow motion" power-up toe die alle obstakels 3 seconden halveert in snelheid
-4. Toon top-3 scores van de huidige sessie op het game-over scherm
-5. Laat de levens-hartjes pulsen (rood knipperen) als er nog maar 1 leven over is
+1. Voeg een "magnet" power-up toe die muntjes 3 seconden automatisch naar de speler trekt
+2. Toon een animatieflits (glow-ring) rondom de speler bij het ophalen van een power-up
+3. Voeg een "shield" visueel toe: teken een cirkel om de speler zolang invincible actief is
+4. Laat de boss obstakel heen-en-weer bewegen (zigzag horizontaal) in plaats van recht naar beneden
+5. Voeg een "combo multiplier" HUD-balk toe die de combo-window visueel aftelt als gauge
