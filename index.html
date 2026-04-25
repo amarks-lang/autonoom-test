@@ -739,6 +739,18 @@
           }
         }
         obstacles[i].rotation += obstacles[i].rotSpeed;
+        // Near miss bonus: +2 als obstakel binnen 5px van speler passeert maar niet raakt
+        if (!obstacles[i].nearMissTriggered && !invincible && !hitInvincible) {
+          const o = obstacles[i];
+          const gapX = Math.max(0, Math.max(player.x, o.x) - Math.min(player.x + player.w, o.x + o.w));
+          const gapY = Math.max(0, Math.max(player.y, o.y) - Math.min(player.y + player.h, o.y + o.h));
+          if (gapX < 5 && gapY < 5 && (gapX > 0 || gapY > 0)) {
+            obstacles[i].nearMissTriggered = true;
+            score += 2;
+            scorePops.push({ x: player.x + player.w / 2, y: player.y - 14, text: 'NEAR MISS! +2', life: 70, maxLife: 70, big: true });
+            playBeep(660, 0.08, 'sine');
+          }
+        }
         if (obstacles[i].horizontal
             ? (obstacles[i].x > canvas.width + obstacles[i].w || obstacles[i].x < -obstacles[i].w * 2)
             : obstacles[i].y > canvas.height) {
