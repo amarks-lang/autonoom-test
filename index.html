@@ -381,6 +381,41 @@
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup',  e => keys[e.key] = false);
 
+    // Swipe-besturing voor touchscreens
+    const SWIPE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+    let swipeTouchId = null, swipeStartX = 0, swipeStartY = 0;
+    canvas.addEventListener('touchstart', e => {
+      if (swipeTouchId !== null) return;
+      const t = e.changedTouches[0];
+      swipeTouchId = t.identifier; swipeStartX = t.clientX; swipeStartY = t.clientY;
+      if (!gameStarted) { gameStarted = true; startBgMusic(); }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier !== swipeTouchId) continue;
+        const dx = t.clientX - swipeStartX, dy = t.clientY - swipeStartY;
+        SWIPE_KEYS.forEach(k => keys[k] = false);
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+          if (Math.abs(dx) >= Math.abs(dy)) keys[dx > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+          else keys[dy > 0 ? 'ArrowDown' : 'ArrowUp'] = true;
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier !== swipeTouchId) continue;
+        SWIPE_KEYS.forEach(k => keys[k] = false);
+        swipeTouchId = null;
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchcancel', e => {
+      SWIPE_KEYS.forEach(k => keys[k] = false);
+      swipeTouchId = null;
+    }, { passive: false });
+
     function bindBtn(id, key) {
       const btn = document.getElementById(id);
       btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; if (!gameStarted) { gameStarted = true; startBgMusic(); } }, { passive: false });
