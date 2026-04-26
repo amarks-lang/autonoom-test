@@ -1323,18 +1323,25 @@
       ctx.strokeRect(barX, barY, barW, barH);
 
       // Hartjes levens
+      const heartPulse = lives === 1 && Math.floor(Date.now() / 300) % 2 === 0;
       ctx.font = '18px sans-serif';
       for (let i = 0; i < 3; i++) {
         let heartColor;
         if (i < lives) {
-          heartColor = '#f44';
+          heartColor = lives === 1 ? (heartPulse ? '#ff0000' : '#ff6666') : '#f44';
         } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
           heartColor = '#f44';
         } else {
           heartColor = '#555';
         }
+        ctx.save();
+        if (lives === 1 && i === 0) {
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = heartPulse ? 14 : 4;
+        }
         ctx.fillStyle = heartColor;
         ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+        ctx.restore();
       }
 
       // Dagelijkse uitdaging balk (onderin)
