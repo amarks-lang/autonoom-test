@@ -125,6 +125,7 @@
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
     let isNewHighscore = false;
     let sessionTimer = 0;
+    const sessionScores = [];
     let bestTime = parseInt(localStorage.getItem('blokrenner_bt') || '0');
     let isNewBestTime = false;
     function loadHighscores() {
@@ -797,6 +798,7 @@
               explosionRings.push({ x: cx, y: cy, r: 10, maxR: 90, life: 60, maxLife: 60 });
               explosionRings.push({ x: cx, y: cy, r: 5, maxR: 140, life: 80, maxLife: 80 });
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
+              sessionScores.push(score); sessionScores.sort((a, b) => b - a);
               const survivedSecs = Math.floor(sessionTimer / 60);
               if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
               showNameEntry(score);
@@ -1513,8 +1515,21 @@
         ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 35);
         ctx.fillStyle = '#fff';
         ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 55);
+        // Top-3 sessie scores
+        if (sessionScores.length > 0) {
+          const medals = ['🥇','🥈','🥉'];
+          const top3 = sessionScores.slice(0, 3);
+          ctx.fillStyle = '#ffe040';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillText('Sessie top-' + top3.length + ':', canvas.width / 2, canvas.height / 2 + 70);
+          ctx.font = '11px sans-serif';
+          top3.forEach((s, i) => {
+            ctx.fillStyle = i === 0 ? '#ffd700' : '#aaa';
+            ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 84 + i * 13);
+          });
+        }
         // Opnieuw-knop op canvas
-        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65, rbw = 120, rbh = 34;
+        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 120, rbw = 120, rbh = 34;
         ctx.fillStyle = '#4af';
         ctx.beginPath();
         ctx.roundRect(rbx, rby, rbw, rbh, 6);
