@@ -498,9 +498,13 @@
       osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     }
 
+    let slowMotion = false;
+    let slowMotionTimer = 0;
+    const SLOW_MOTION_DURATION = 180;
+
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.33 ? 'shield' : r < 0.66 ? 'speed' : 'multiplier';
+      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -512,7 +516,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMotion = false; slowMotionTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -679,6 +683,8 @@
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           } else if (powerUp.type === 'multiplier') {
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
+          } else if (powerUp.type === 'slowmo') {
+            slowMotion = true; slowMotionTimer = SLOW_MOTION_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -707,6 +713,7 @@
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
+      if (slowMotion) { slowMotionTimer--; if (slowMotionTimer <= 0) { slowMotion = false; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
@@ -725,15 +732,16 @@
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
 
+      const slowFactor = slowMotion ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
         if (obstacles[i].horizontal) {
-          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
-          obstacles[i].y += (Math.random() - 0.5) * 1.5;
+          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
+          obstacles[i].y += (Math.random() - 0.5) * 1.5 * slowFactor;
           obstacles[i].y = Math.max(0, Math.min(canvas.height - obstacles[i].h, obstacles[i].y));
         } else {
-          obstacles[i].y += obstacles[i].speed;
+          obstacles[i].y += obstacles[i].speed * slowFactor;
           if (obstacles[i].type === 'zigzag') {
-            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
             if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
               obstacles[i].zigzagDir *= -1;
               obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
@@ -1098,6 +1106,17 @@
           ctx.font = 'bold 7px sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText('x2', 0, 3);
+          ctx.restore();
+        } else if (powerUp.type === 'slowmo') {
+          ctx.save();
+          ctx.fillStyle = '#88eeff';
+          ctx.shadowColor = '#88eeff';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.fillStyle = '#003344';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⏳', powerUp.x + powerUp.w / 2, powerUp.y + 15);
           ctx.restore();
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
