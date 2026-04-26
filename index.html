@@ -140,6 +140,7 @@
       const top3 = list.slice(0, 3);
       localStorage.setItem('blokrenner_top3', JSON.stringify(top3));
     }
+    const sessionScores = [];
     let pendingScore = 0;
     const nameEntryEl = document.getElementById('name-entry');
     const playerNameInput = document.getElementById('player-name');
@@ -798,6 +799,7 @@
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
               const survivedSecs = Math.floor(sessionTimer / 60);
               if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
+              sessionScores.push(score);
               showNameEntry(score);
             } else {
               hitInvincible = true;
@@ -1528,8 +1530,19 @@
         ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 35);
         ctx.fillStyle = '#fff';
         ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 55);
+        // Top-3 sessie scores
+        if (sessionScores.length > 1) {
+          const top3s = [...sessionScores].sort((a, b) => b - a).slice(0, 3);
+          ctx.fillStyle = '#ffe040';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillText('🏆 Sessie top ' + top3s.length + ':', canvas.width / 2, canvas.height / 2 + 70);
+          ctx.font = '11px sans-serif';
+          const medals = ['🥇', '🥈', '🥉'];
+          top3s.forEach((s, i) => ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 83 + i * 13));
+        }
         // Opnieuw-knop op canvas
-        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65, rbw = 120, rbh = 34;
+        const extraOffset = sessionScores.length > 1 ? Math.min(sessionScores.length, 3) * 13 + 16 : 0;
+        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65 + extraOffset, rbw = 120, rbh = 34;
         ctx.fillStyle = '#4af';
         ctx.beginPath();
         ctx.roundRect(rbx, rby, rbw, rbh, 6);
