@@ -1295,18 +1295,24 @@
       ctx.strokeRect(barX, barY, barW, barH);
 
       // Hartjes levens
-      ctx.font = '18px sans-serif';
       for (let i = 0; i < 3; i++) {
-        let heartColor;
-        if (i < lives) {
-          heartColor = '#f44';
-        } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
-          heartColor = '#f44';
-        } else {
-          heartColor = '#555';
+        const active = i < lives;
+        const blinking = i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0;
+        const pulse = lives === 1 && active;
+        ctx.save();
+        const hx = canvas.width - 28 - i * 22, hy = 20;
+        if (pulse) {
+          const s = 1 + 0.25 * Math.abs(Math.sin(Date.now() / 200));
+          ctx.translate(hx + 9, hy - 9);
+          ctx.scale(s, s);
+          ctx.translate(-(hx + 9), -(hy - 9));
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 10 + 8 * Math.abs(Math.sin(Date.now() / 200));
         }
-        ctx.fillStyle = heartColor;
-        ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = active || blinking ? '#f44' : '#555';
+        ctx.fillText('♥', hx, hy);
+        ctx.restore();
       }
 
       // Dodge streak teller
