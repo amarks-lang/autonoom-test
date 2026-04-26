@@ -284,7 +284,7 @@
     const scorePops = [];
     const explosionRings = [];
     const trail = [];
-    const skinColors = ['#4af', '#f80', '#0f8'];
+    const skinColors = ['#4af', '#f80', '#0f8', '#a0f', '#f4a'];
     let skinColor = skinColors[0];
 
     // Boss-systeem
@@ -313,6 +313,8 @@
     let comboDisplay = '';
     let comboDisplayTimer = 0;
     const COMBO_WINDOW = 120;
+    let dodgeStreak = 0;
+    let bestStreak = 0;
     let lastLevel = 1;
     let levelBanner = '';
     let levelBannerTimer = 0;
@@ -517,6 +519,7 @@
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
       heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
+      dodgeStreak = 0;
       achievementsUnlocked.clear(); achievementQueue.length = 0; achievementTimer = 0; sessionCoinCount = 0; coinTrails.length = 0;
       dailyChallenge = getDailyChallenge(); dailyChallengeCompleted = dailyChallenge.completed;
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
@@ -770,8 +773,11 @@
               else playBeep(880, 0.1);
             }
           }
+          dodgeStreak++;
+          if (dodgeStreak > bestStreak) bestStreak = dodgeStreak;
           obstacles.splice(i, 1);
         } else if (!invincible && !hitInvincible && collides(player, obstacles[i])) {
+            dodgeStreak = 0;
             lives--;
             heartBlinkIndex = lives;
             heartBlinkTimer = 30;
@@ -1220,6 +1226,16 @@
       ctx.fillText('Score: ' + score, 0, 0);
       ctx.restore();
       ctx.textAlign = 'left';
+
+      // Dodge streak HUD
+      if (dodgeStreak > 0) {
+        ctx.save();
+        ctx.fillStyle = dodgeStreak >= 10 ? '#f0f' : dodgeStreak >= 5 ? '#f80' : '#0f8';
+        ctx.font = `bold 11px sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText('Streak: ' + dodgeStreak, 8, 28);
+        ctx.restore();
+      }
 
       // Snelheidsmeter (verticale balk links)
       const speedVal = Math.min(2 + score * 0.3, 10);
