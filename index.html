@@ -125,6 +125,7 @@
     let highscore = parseInt(localStorage.getItem('blokrenner_hs') || '0');
     let isNewHighscore = false;
     let sessionTimer = 0;
+    const sessionScores = [];
     let bestTime = parseInt(localStorage.getItem('blokrenner_bt') || '0');
     let isNewBestTime = false;
     function loadHighscores() {
@@ -284,7 +285,7 @@
     const scorePops = [];
     const explosionRings = [];
     const trail = [];
-    const skinColors = ['#4af', '#f80', '#0f8'];
+    const skinColors = ['#4af', '#f80', '#0f8', '#a0f', '#f0a'];
     let skinColor = skinColors[0];
 
     // Boss-systeem
@@ -498,9 +499,13 @@
       osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     }
 
+    let slowMotion = false;
+    let slowMotionTimer = 0;
+    const SLOW_MOTION_DURATION = 180;
+
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.33 ? 'shield' : r < 0.66 ? 'speed' : 'multiplier';
+      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -512,7 +517,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMotion = false; slowMotionTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -679,6 +684,8 @@
             speedBoost = true; speedBoostTimer = SPEED_BOOST_DURATION;
           } else if (powerUp.type === 'multiplier') {
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
+          } else if (powerUp.type === 'slowmo') {
+            slowMotion = true; slowMotionTimer = SLOW_MOTION_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -707,6 +714,7 @@
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
+      if (slowMotion) { slowMotionTimer--; if (slowMotionTimer <= 0) { slowMotion = false; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
@@ -725,15 +733,16 @@
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
 
+      const slowFactor = slowMotion ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
         if (obstacles[i].horizontal) {
-          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
-          obstacles[i].y += (Math.random() - 0.5) * 1.5;
+          obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
+          obstacles[i].y += (Math.random() - 0.5) * 1.5 * slowFactor;
           obstacles[i].y = Math.max(0, Math.min(canvas.height - obstacles[i].h, obstacles[i].y));
         } else {
-          obstacles[i].y += obstacles[i].speed;
+          obstacles[i].y += obstacles[i].speed * slowFactor;
           if (obstacles[i].type === 'zigzag') {
-            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir;
+            obstacles[i].x += obstacles[i].zigzagSpeed * obstacles[i].zigzagDir * slowFactor;
             if (obstacles[i].x <= 0 || obstacles[i].x + obstacles[i].w >= canvas.width) {
               obstacles[i].zigzagDir *= -1;
               obstacles[i].x = Math.max(0, Math.min(canvas.width - obstacles[i].w, obstacles[i].x));
@@ -789,6 +798,7 @@
               explosionRings.push({ x: cx, y: cy, r: 10, maxR: 90, life: 60, maxLife: 60 });
               explosionRings.push({ x: cx, y: cy, r: 5, maxR: 140, life: 80, maxLife: 80 });
               if (score > highscore) { highscore = score; localStorage.setItem('blokrenner_hs', highscore); isNewHighscore = true; } else { isNewHighscore = false; }
+              sessionScores.push(score); sessionScores.sort((a, b) => b - a);
               const survivedSecs = Math.floor(sessionTimer / 60);
               if (survivedSecs > bestTime) { bestTime = survivedSecs; localStorage.setItem('blokrenner_bt', bestTime); isNewBestTime = true; } else { isNewBestTime = false; }
               showNameEntry(score);
@@ -1099,6 +1109,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('x2', 0, 3);
           ctx.restore();
+        } else if (powerUp.type === 'slowmo') {
+          ctx.save();
+          ctx.fillStyle = '#88eeff';
+          ctx.shadowColor = '#88eeff';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.fillStyle = '#003344';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⏳', powerUp.x + powerUp.w / 2, powerUp.y + 15);
+          ctx.restore();
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1274,18 +1295,24 @@
       ctx.strokeRect(barX, barY, barW, barH);
 
       // Hartjes levens
-      ctx.font = '18px sans-serif';
       for (let i = 0; i < 3; i++) {
-        let heartColor;
-        if (i < lives) {
-          heartColor = '#f44';
-        } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
-          heartColor = '#f44';
-        } else {
-          heartColor = '#555';
+        const active = i < lives;
+        const blinking = i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0;
+        const pulse = lives === 1 && active;
+        ctx.save();
+        const hx = canvas.width - 28 - i * 22, hy = 20;
+        if (pulse) {
+          const s = 1 + 0.25 * Math.abs(Math.sin(Date.now() / 200));
+          ctx.translate(hx + 9, hy - 9);
+          ctx.scale(s, s);
+          ctx.translate(-(hx + 9), -(hy - 9));
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 10 + 8 * Math.abs(Math.sin(Date.now() / 200));
         }
-        ctx.fillStyle = heartColor;
-        ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = active || blinking ? '#f44' : '#555';
+        ctx.fillText('♥', hx, hy);
+        ctx.restore();
       }
 
       // Dodge streak teller
@@ -1494,8 +1521,21 @@
         ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 35);
         ctx.fillStyle = '#fff';
         ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 55);
+        // Top-3 sessie scores
+        if (sessionScores.length > 0) {
+          const medals = ['🥇','🥈','🥉'];
+          const top3 = sessionScores.slice(0, 3);
+          ctx.fillStyle = '#ffe040';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillText('Sessie top-' + top3.length + ':', canvas.width / 2, canvas.height / 2 + 70);
+          ctx.font = '11px sans-serif';
+          top3.forEach((s, i) => {
+            ctx.fillStyle = i === 0 ? '#ffd700' : '#aaa';
+            ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 84 + i * 13);
+          });
+        }
         // Opnieuw-knop op canvas
-        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65, rbw = 120, rbh = 34;
+        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 120, rbw = 120, rbh = 34;
         ctx.fillStyle = '#4af';
         ctx.beginPath();
         ctx.roundRect(rbx, rby, rbw, rbh, 6);
