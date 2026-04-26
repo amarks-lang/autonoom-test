@@ -1310,18 +1310,29 @@
       ctx.strokeRect(barX, barY, barW, barH);
 
       // Hartjes levens
-      ctx.font = '18px sans-serif';
+      const heartPulse = lives === 1 ? 1 + 0.25 * Math.abs(Math.sin(Date.now() / 180)) : 1;
       for (let i = 0; i < 3; i++) {
         let heartColor;
         if (i < lives) {
-          heartColor = '#f44';
+          heartColor = lives === 1 ? (Math.floor(Date.now() / 220) % 2 === 0 ? '#ff2222' : '#ff8888') : '#f44';
         } else if (i === heartBlinkIndex && heartBlinkTimer > 0 && Math.floor(heartBlinkTimer / 3) % 2 === 0) {
           heartColor = '#f44';
         } else {
           heartColor = '#555';
         }
+        const hx = canvas.width - 28 - i * 22, hy = 20;
+        ctx.save();
+        if (i === 0 && lives === 1) {
+          ctx.translate(hx + 9, hy - 9);
+          ctx.scale(heartPulse, heartPulse);
+          ctx.translate(-(hx + 9), -(hy - 9));
+          ctx.shadowColor = '#ff2222';
+          ctx.shadowBlur = 8 + 8 * Math.abs(Math.sin(Date.now() / 180));
+        }
+        ctx.font = '18px sans-serif';
         ctx.fillStyle = heartColor;
-        ctx.fillText('♥', canvas.width - 28 - i * 22, 20);
+        ctx.fillText('♥', hx, hy);
+        ctx.restore();
       }
 
       // Dodge streak teller
