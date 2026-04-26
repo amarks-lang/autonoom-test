@@ -1,7 +1,7 @@
 # Game Taken
 
-1. Voeg een "dodge streak" teller toe in de HUD: tel hoeveel obstakels op rij vermeden, reset bij treffer
-2. Voeg 2 extra skin kleuren toe aan de kleurenkiezer (paars en roze)
-3. Voeg een "slow motion" power-up toe die alle obstakels 3 seconden halveert in snelheid
-4. Toon top-3 scores van de huidige sessie op het game-over scherm
-5. Laat de levens-hartjes pulsen (rood knipperen) als er nog maar 1 leven over is
+1. Voeg een magnetisch power-up toe die muntjes automatisch naar de speler trekt gedurende 4 seconden
+2. Laat de achtergrond lichtflitsen bij een level-up (korte witte flash over het canvas)
+3. Voeg een "combo multiplier" toe: als de dodge streak >= 5 is, telt elke score-tick dubbel
+4. Toon een animatie van vliegende muntjes van het obstakel naar de HUD bij het ophalen
+5. Voeg geluidseffect toe bij slow motion activering: een dalende toon die aangeeft dat de tijd vertraagt
