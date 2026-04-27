@@ -1,7 +1,7 @@
 # Game Taken
 
-1. Voeg een magneet power-up toe die muntjes 5 seconden automatisch naar de speler trekt
-2. Toon een 3-2-1-GO! countdown bij het starten van elke nieuwe ronde voordat obstakels spawnen
-3. Voeg een "freeze" obstakel type toe (blauw, ijsblokje) dat de speler bij aanraking 1 seconde vertraagt
-4. Voeg een "double coins" item toe in de winkel (30 muntjes) dat alle muntjes die ronde verdubbelt
-5. Laat de trail van de speler de kleur van de gekozen skin krijgen in plaats van altijd blauw
+1. Voeg een "bounce" obstakel toe dat horizontaal heen en weer stuitert tegen de zijkanten van het scherm
+2. Toon een visuele indicator (pijl of glow) boven muntjes die buiten het scherm zijn, zodat de speler ze kan vinden
+3. Voeg een "ghost mode" power-up toe (paars, 3 seconden) waarbij de speler door obstakels heen kan bewegen zonder schade
+4. Laat de achtergrondkleur tijdens de 3-2-1-GO! countdown oplichten in de skin-kleur van de speler
+5. Voeg een geluid-effect toe (korte jingle) als de speler een nieuw level bereikt, anders dan de huidige beep
