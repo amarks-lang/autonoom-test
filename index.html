@@ -181,8 +181,11 @@
     let shopOpen = false;
     let shopShield = false;
     let shopExtraLife = false;
+    let shopDoubleCoins = false;
+    let doubleCoinsActive = false;
     const SHOP_SHIELD_COST = 10;
     const SHOP_LIFE_COST = 20;
+    const SHOP_DOUBLE_COINS_COST = 30;
 
     let lives = 3;
     let hitInvincible = false;
@@ -276,9 +279,19 @@
     let slowMo = false;
     let slowMoTimer = 0;
     const SLOWMO_DURATION = 180;
+    let magnetActive = false;
+    let magnetTimer = 0;
+    const MAGNET_DURATION = 300;
     let gameOverSpin = false;
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
+    let countdownActive = false;
+    let countdownTimer = 0;
+    let countdownValue = 3;
+    const COUNTDOWN_STEP = 60;
+    let frozenActive = false;
+    let frozenTimer = 0;
+    const FROZEN_DURATION = 60;
 
     // Pauze
     let paused = false;
@@ -349,7 +362,7 @@
     }
 
     function spawnObstacle() {
-      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
+      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag', 'freeze'];
       const type = types[Math.floor(Math.random() * types.length)];
       const size = (type === 'rect') ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
       const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
@@ -504,7 +517,7 @@
 
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
+      const type = r < 0.2 ? 'shield' : r < 0.4 ? 'speed' : r < 0.6 ? 'multiplier' : r < 0.8 ? 'slowmo' : 'magnet';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -515,8 +528,9 @@
       spawnTimer = 0; scoreTimer = 0; score = 0;
       gameOver = false;
       gameStarted = true;
+      countdownActive = true; countdownTimer = 0; countdownValue = 3;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnetActive = false; magnetTimer = 0; frozenActive = false; frozenTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -528,6 +542,7 @@
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
       if (shopShield) { invincible = true; invincibleTimer = INVINCIBLE_DURATION; shopShield = false; }
       if (shopExtraLife) { lives = 4; shopExtraLife = false; }
+      doubleCoinsActive = shopDoubleCoins; if (shopDoubleCoins) shopDoubleCoins = false;
     }
 
     document.addEventListener('keydown', e => {
@@ -564,7 +579,8 @@
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
-      const currentSpeed = speedBoost ? player.speed * 2 : player.speed;
+      if (frozenActive) { frozenTimer--; if (frozenTimer <= 0) frozenActive = false; }
+      const currentSpeed = speedBoost ? player.speed * 2 : frozenActive ? player.speed * 0.3 : player.speed;
       if (keys['ArrowLeft'])  { player.x = Math.max(0, player.x - currentSpeed); player.rotVel -= 0.04; }
       if (keys['ArrowRight']) { player.x = Math.min(canvas.width - player.w, player.x + currentSpeed); player.rotVel += 0.04; }
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - currentSpeed);
@@ -572,12 +588,23 @@
       player.rotVel *= 0.88;
       player.rotation += player.rotVel;
 
+      if (countdownActive) {
+        countdownTimer++;
+        if (countdownTimer >= COUNTDOWN_STEP) {
+          countdownTimer = 0;
+          countdownValue--;
+          if (countdownValue < 0) { countdownActive = false; }
+          else { playBeep(countdownValue === 0 ? 880 : 440, 0.15); }
+        }
+      }
       const spawnInterval = Math.max(20, 60 - score * 2);
-      spawnTimer++;
-      if (spawnTimer >= spawnInterval) {
-        spawnObstacle();
-        if (Math.floor(score / 10) + 1 >= 5) spawnObstacle();
-        spawnTimer = 0;
+      if (!countdownActive) {
+        spawnTimer++;
+        if (spawnTimer >= spawnInterval) {
+          spawnObstacle();
+          if (Math.floor(score / 10) + 1 >= 5) spawnObstacle();
+          spawnTimer = 0;
+        }
       }
 
       sessionTimer++;
@@ -632,15 +659,28 @@
       // Muntjes spawnen, bewegen & ophalen
       coinTimer++;
       if (coinTimer >= COIN_INTERVAL) { spawnCoin(); coinTimer = 0; }
+      if (magnetActive) { magnetTimer--; if (magnetTimer <= 0) magnetActive = false; }
       for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].y += coins[i].speed;
+        if (magnetActive) {
+          const cx = coins[i].x + coins[i].w / 2;
+          const cy = coins[i].y + coins[i].h / 2;
+          const px = player.x + player.w / 2;
+          const py = player.y + player.h / 2;
+          const dx = px - cx; const dy = py - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const pull = Math.min(6, 120 / dist);
+          coins[i].x += (dx / dist) * pull;
+          coins[i].y += (dy / dist) * pull;
+        } else {
+          coins[i].y += coins[i].speed;
+        }
         if (Math.random() < 0.5) {
           coinTrails.push({ x: coins[i].x + coins[i].w/2 + (Math.random()-0.5)*4, y: coins[i].y + (Math.random()-0.5)*3, vx: (Math.random()-0.5)*0.6, vy: -0.4 - Math.random()*0.6, size: 1.5 + Math.random()*2, life: 12 + Math.random()*10 });
         }
         if (coins[i].y > canvas.height) {
           coins.splice(i, 1);
         } else if (collides(player, coins[i])) {
-          const coinGain = 5 * scoreMultiplier;
+          const coinGain = 5 * scoreMultiplier * (doubleCoinsActive ? 2 : 1);
           score += coinGain;
           totalCoins++;
           localStorage.setItem('blokrenner_coins', totalCoins);
@@ -685,6 +725,8 @@
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
           } else if (powerUp.type === 'slowmo') {
             slowMo = true; slowMoTimer = SLOWMO_DURATION;
+          } else if (powerUp.type === 'magnet') {
+            magnetActive = true; magnetTimer = MAGNET_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -782,6 +824,11 @@
           }
           dodgeStreak++;
           obstacles.splice(i, 1);
+        } else if (!hitInvincible && obstacles[i].type === 'freeze' && collides(player, obstacles[i])) {
+            frozenActive = true; frozenTimer = FROZEN_DURATION;
+            obstacles.splice(i, 1);
+            playBeep(220, 0.2, 'sine');
+            scorePops.push({ x: player.x + player.w / 2, y: player.y - 10, text: 'BEVROREN!', life: 60, maxLife: 60, big: false });
         } else if (!invincible && !hitInvincible && collides(player, obstacles[i])) {
             dodgeStreak = 0;
             lives--;
@@ -910,12 +957,23 @@
         ctx.fillStyle = shopExtraLife ? '#000' : '#aaa';
         ctx.fillText('Begin de ronde met 4 levens', canvas.width / 2, 159);
 
+        // Item 3: Dubbele muntjes
+        const canDouble = totalCoins >= SHOP_DOUBLE_COINS_COST;
+        ctx.fillStyle = shopDoubleCoins ? '#0f8' : (canDouble ? '#ffe040' : '#555');
+        ctx.fillRect(40, 178, canvas.width - 80, 38);
+        ctx.fillStyle = shopDoubleCoins ? '#000' : '#fff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(shopDoubleCoins ? '✓ Dubbele muntjes actief' : 'Dubbele muntjes — ' + SHOP_DOUBLE_COINS_COST + ' 🪙', canvas.width / 2, 193);
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = shopDoubleCoins ? '#000' : '#aaa';
+        ctx.fillText('Alle muntjes deze ronde ×2', canvas.width / 2, 207);
+
         // Sluit knop
         ctx.fillStyle = '#333';
-        ctx.fillRect(canvas.width / 2 - 40, 178, 80, 28);
+        ctx.fillRect(canvas.width / 2 - 40, 226, 80, 28);
         ctx.fillStyle = '#fff';
         ctx.font = '13px sans-serif';
-        ctx.fillText('Sluiten', canvas.width / 2, 196);
+        ctx.fillText('Sluiten', canvas.width / 2, 244);
         ctx.textAlign = 'left';
       }
 
@@ -939,8 +997,15 @@
               localStorage.setItem('blokrenner_coins', totalCoins);
             } else if (shopExtraLife) { shopExtraLife = false; totalCoins += SHOP_LIFE_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
           }
+          // Item 3 klik
+          if (mx >= 40 && mx <= canvas.width - 40 && my >= 178 && my <= 216) {
+            if (!shopDoubleCoins && totalCoins >= SHOP_DOUBLE_COINS_COST) {
+              shopDoubleCoins = true; totalCoins -= SHOP_DOUBLE_COINS_COST;
+              localStorage.setItem('blokrenner_coins', totalCoins);
+            } else if (shopDoubleCoins) { shopDoubleCoins = false; totalCoins += SHOP_DOUBLE_COINS_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
+          }
           // Sluiten klik
-          if (mx >= canvas.width / 2 - 40 && mx <= canvas.width / 2 + 40 && my >= 178 && my <= 206) {
+          if (mx >= canvas.width / 2 - 40 && mx <= canvas.width / 2 + 40 && my >= 226 && my <= 254) {
             shopOpen = false;
           }
           return;
@@ -999,12 +1064,12 @@
         ctx.fillStyle = '#000';
         ctx.fillRect(o.x + 4, o.y + 4, o.w, o.h);
         ctx.restore();
-        const glowMap = { rect: '#e44', triangle: '#f80', circle: '#c4f', zigzag: '#0ef' };
+        const glowMap = { rect: '#e44', triangle: '#f80', circle: '#c4f', zigzag: '#0ef', freeze: '#4df' };
         ctx.save();
         if (o.speed > 6) ctx.translate((Math.random() - 0.5) * 2, 0);
         ctx.shadowColor = glowMap[o.type] || '#e44';
         ctx.shadowBlur = Math.min(10 + (level - 1) * 2, 20);
-        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
+        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : o.type === 'freeze' ? '#4df' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
           ctx.moveTo(o.x + o.w / 2, o.y);
@@ -1029,6 +1094,14 @@
             ctx.lineTo(o.x + zW * (z + 1), o.y + o.h / 2);
           }
           ctx.stroke();
+        } else if (o.type === 'freeze') {
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('❄', o.x + o.w / 2, o.y + o.h / 2 + 5);
+          ctx.textAlign = 'left';
         } else if (o.type === 'boss') {
           ctx.shadowColor = '#ff0000';
           ctx.shadowBlur = 24 + 10 * Math.sin(Date.now() / 120);
@@ -1119,6 +1192,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('S/M', powerUp.x + powerUp.w / 2, powerUp.y + 13);
           ctx.textAlign = 'left';
+        } else if (powerUp.type === 'magnet') {
+          ctx.fillStyle = '#ff4466';
+          ctx.shadowColor = '#ff4466';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🧲', powerUp.x + powerUp.w / 2, powerUp.y + 14);
+          ctx.textAlign = 'left';
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1126,6 +1210,27 @@
           ctx.font = '12px sans-serif';
           ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
         }
+      }
+
+      // Bevroren indicator
+      if (frozenActive) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(68,221,255,${0.6 + 0.4 * Math.sin(frozenTimer * 0.3)})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(player.x - 4, player.y - 4, player.w + 8, player.h + 8);
+        ctx.restore();
+      }
+
+      // Magneet indicator (pulserende ring rond speler)
+      if (magnetActive) {
+        const pulse = 0.5 + 0.5 * Math.sin(magnetTimer * 0.15);
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,68,102,${0.5 + 0.4 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x + player.w / 2, player.y + player.h / 2, 40 + 8 * pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       // Multiplier balk onder speler
@@ -1149,7 +1254,7 @@
       for (let i = 0; i < trail.length; i++) {
         const t = trail[i];
         ctx.globalAlpha = (t.life / 10) * 0.4;
-        ctx.fillStyle = player.color || '#4af';
+        ctx.fillStyle = nightMode ? '#ffcc00' : skinColor;
         ctx.fillRect(t.x, t.y, player.w, player.h);
       }
       ctx.globalAlpha = 1;
@@ -1489,6 +1594,21 @@
         ctx.fillStyle = '#aaa';
         ctx.font = '13px sans-serif';
         ctx.fillText('Druk P of Esc om door te gaan', canvas.width / 2, canvas.height / 2 + 44);
+        ctx.textAlign = 'left';
+      }
+
+      if (countdownActive && gameStarted) {
+        const label = countdownValue === 0 ? 'GO!' : String(countdownValue);
+        const alpha = Math.min(1, (COUNTDOWN_STEP - countdownTimer) / 20);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = 'bold 80px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = countdownValue === 0 ? '#0f8' : '#fff';
+        ctx.shadowColor = countdownValue === 0 ? '#0f8' : '#4af';
+        ctx.shadowBlur = 30;
+        ctx.fillText(label, canvas.width / 2, canvas.height / 2 + 28);
+        ctx.restore();
         ctx.textAlign = 'left';
       }
 
