@@ -276,6 +276,9 @@
     let slowMo = false;
     let slowMoTimer = 0;
     const SLOWMO_DURATION = 180;
+    let magnet = false;
+    let magnetTimer = 0;
+    const MAGNET_DURATION = 300;
     let gameOverSpin = false;
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
@@ -504,7 +507,7 @@
 
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
+      const type = r < 0.2 ? 'shield' : r < 0.4 ? 'speed' : r < 0.6 ? 'multiplier' : r < 0.8 ? 'slowmo' : 'magnet';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -516,7 +519,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnet = false; magnetTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -633,7 +636,17 @@
       coinTimer++;
       if (coinTimer >= COIN_INTERVAL) { spawnCoin(); coinTimer = 0; }
       for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].y += coins[i].speed;
+        if (magnet) {
+          const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+          const ccx = coins[i].x + coins[i].w / 2, ccy = coins[i].y + coins[i].h / 2;
+          const dx = pcx - ccx, dy = pcy - ccy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const pullSpeed = Math.min(5, 120 / dist);
+          coins[i].x += (dx / dist) * pullSpeed;
+          coins[i].y += (dy / dist) * pullSpeed;
+        } else {
+          coins[i].y += coins[i].speed;
+        }
         if (Math.random() < 0.5) {
           coinTrails.push({ x: coins[i].x + coins[i].w/2 + (Math.random()-0.5)*4, y: coins[i].y + (Math.random()-0.5)*3, vx: (Math.random()-0.5)*0.6, vy: -0.4 - Math.random()*0.6, size: 1.5 + Math.random()*2, life: 12 + Math.random()*10 });
         }
@@ -685,6 +698,8 @@
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
           } else if (powerUp.type === 'slowmo') {
             slowMo = true; slowMoTimer = SLOWMO_DURATION;
+          } else if (powerUp.type === 'magnet') {
+            magnet = true; magnetTimer = MAGNET_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -714,6 +729,7 @@
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
       if (slowMo) { slowMoTimer--; if (slowMoTimer <= 0) { slowMo = false; playFallingSweep(); } }
+      if (magnet) { magnetTimer--; if (magnetTimer <= 0) { magnet = false; playFallingSweep(); } }
       if (hitInvincible) { hitInvincibleTimer--; if (hitInvincibleTimer <= 0) hitInvincible = false; }
 
       for (let i = scorePops.length - 1; i >= 0; i--) { scorePops[i].y -= 0.9; scorePops[i].life--; if (scorePops[i].life <= 0) scorePops.splice(i, 1); }
@@ -1119,6 +1135,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('S/M', powerUp.x + powerUp.w / 2, powerUp.y + 13);
           ctx.textAlign = 'left';
+        } else if (powerUp.type === 'magnet') {
+          ctx.fillStyle = '#ff69b4';
+          ctx.shadowColor = '#ff69b4';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🧲', powerUp.x + powerUp.w / 2, powerUp.y + 14);
+          ctx.textAlign = 'left';
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1210,6 +1237,31 @@
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(Math.ceil(slowMoTimer / 60) + 's', barX + barW + 3, barY + 4);
+        ctx.restore();
+      }
+
+      // Magneet aftelbalk + aura
+      if (magnet) {
+        const barW = player.w + 8, barX = player.x - 4;
+        const activeCount = [invincible || speedBoost, slowMo].filter(Boolean).length;
+        const barY = player.y + player.h + 4 + activeCount * 8;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY + 8, barW, 4);
+        ctx.fillStyle = '#ff69b4';
+        ctx.fillRect(barX, barY + 8, barW * (magnetTimer / MAGNET_DURATION), 4);
+        ctx.save();
+        ctx.fillStyle = '#ff69b4';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(Math.ceil(magnetTimer / 60) + 's', barX + barW + 3, barY + 12);
+        ctx.restore();
+        // Aura rond speler
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,105,180,${0.3 + 0.2 * Math.sin(Date.now() / 150)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x + player.w / 2, player.y + player.h / 2, 28 + 4 * Math.sin(Date.now() / 200), 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
       }
 
