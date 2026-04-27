@@ -279,6 +279,9 @@
     let magnet = false;
     let magnetTimer = 0;
     const MAGNET_DURATION = 300;
+    let countdown = 0;
+    let countdownTimer = 0;
+    const COUNTDOWN_STEP = 52;
     let gameOverSpin = false;
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
@@ -396,7 +399,7 @@
       if (swipeTouchId !== null) return;
       const t = e.changedTouches[0];
       swipeTouchId = t.identifier; swipeStartX = t.clientX; swipeStartY = t.clientY;
-      if (!gameStarted) { gameStarted = true; startBgMusic(); }
+      if (!gameStarted) { gameStarted = true; startBgMusic(); countdown = 4; countdownTimer = COUNTDOWN_STEP; }
       e.preventDefault();
     }, { passive: false });
     canvas.addEventListener('touchmove', e => {
@@ -426,9 +429,9 @@
 
     function bindBtn(id, key) {
       const btn = document.getElementById(id);
-      btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; if (!gameStarted) { gameStarted = true; startBgMusic(); } }, { passive: false });
+      btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; if (!gameStarted) { gameStarted = true; startBgMusic(); countdown = 4; countdownTimer = COUNTDOWN_STEP; } }, { passive: false });
       btn.addEventListener('touchend',   e => { e.preventDefault(); keys[key] = false; }, { passive: false });
-      btn.addEventListener('mousedown',  () => { keys[key] = true;  if (!gameStarted) { gameStarted = true; startBgMusic(); } });
+      btn.addEventListener('mousedown',  () => { keys[key] = true;  if (!gameStarted) { gameStarted = true; startBgMusic(); countdown = 4; countdownTimer = COUNTDOWN_STEP; } });
       btn.addEventListener('mouseup',    () => { keys[key] = false; });
       btn.addEventListener('mouseleave', () => { keys[key] = false; });
     }
@@ -531,10 +534,11 @@
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
       if (shopShield) { invincible = true; invincibleTimer = INVINCIBLE_DURATION; shopShield = false; }
       if (shopExtraLife) { lives = 4; shopExtraLife = false; }
+      countdown = 4; countdownTimer = COUNTDOWN_STEP;
     }
 
     document.addEventListener('keydown', e => {
-      if (!gameStarted && e.key === 'Enter') { gameStarted = true; startBgMusic(); }
+      if (!gameStarted && e.key === 'Enter') { gameStarted = true; startBgMusic(); countdown = 4; countdownTimer = COUNTDOWN_STEP; }
       if (gameOver && e.key === 'Enter') reset();
       if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
         paused = !paused; updatePauseIcon();
@@ -560,6 +564,15 @@
         return;
       }
       if (gameOver || paused) return;
+
+      if (countdown > 0) {
+        countdownTimer--;
+        if (countdownTimer <= 0) {
+          countdown--;
+          countdownTimer = countdown === 1 ? 36 : COUNTDOWN_STEP;
+        }
+        return;
+      }
 
       const moving = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown'];
       if (moving) { playerIdleTimer = 0; } else { playerIdleTimer++; }
@@ -961,7 +974,7 @@
           return;
         }
         if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
-          gameStarted = true; startBgMusic();
+          gameStarted = true; startBgMusic(); countdown = 4; countdownTimer = COUNTDOWN_STEP;
           canvas.onclick = null;
         }
         if (mx >= wx && mx <= wx + ww && my >= wy && my <= wy + wh) {
@@ -1616,6 +1629,26 @@
         };
       }
       ctx.restore();
+
+      if (countdown > 0) {
+        const texts = ['GO!', '1', '2', '3'];
+        const colors = ['#0f0', '#ff0', '#f80', '#f44'];
+        const txt = texts[countdown - 1] || '';
+        const col = colors[countdown - 1] || '#fff';
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = col;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 32;
+        ctx.font = 'bold 88px sans-serif';
+        ctx.textAlign = 'center';
+        const pulse = 1 + 0.12 * Math.sin(countdownTimer * 0.25);
+        ctx.translate(canvas.width / 2, canvas.height / 2 + 32);
+        ctx.scale(pulse, pulse);
+        ctx.fillText(txt, 0, 0);
+        ctx.restore();
+      }
     }
 
     function loop() {
