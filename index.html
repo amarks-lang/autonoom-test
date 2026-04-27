@@ -582,7 +582,7 @@
 
       const moving = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown'];
       if (moving) { playerIdleTimer = 0; } else { playerIdleTimer++; }
-      if (moving) trail.push({ x: player.x, y: player.y, life: 10 });
+      if (moving) trail.push({ x: player.x, y: player.y, life: 10, color: nightMode ? '#ffcc00' : skinColor });
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
@@ -1227,7 +1227,7 @@
       for (let i = 0; i < trail.length; i++) {
         const t = trail[i];
         ctx.globalAlpha = (t.life / 10) * 0.4;
-        ctx.fillStyle = player.color || '#4af';
+        ctx.fillStyle = t.color || skinColor || '#4af';
         ctx.fillRect(t.x, t.y, player.w, player.h);
       }
       ctx.globalAlpha = 1;
