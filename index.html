@@ -276,6 +276,9 @@
     let slowMo = false;
     let slowMoTimer = 0;
     const SLOWMO_DURATION = 180;
+    let magnetActive = false;
+    let magnetTimer = 0;
+    const MAGNET_DURATION = 300;
     let gameOverSpin = false;
     let gameOverSpinTimer = 0;
     const GAME_OVER_SPIN_DURATION = 30;
@@ -504,7 +507,7 @@
 
     function spawnPowerUp() {
       const r = Math.random();
-      const type = r < 0.25 ? 'shield' : r < 0.5 ? 'speed' : r < 0.75 ? 'multiplier' : 'slowmo';
+      const type = r < 0.2 ? 'shield' : r < 0.4 ? 'speed' : r < 0.6 ? 'multiplier' : r < 0.8 ? 'slowmo' : 'magnet';
       powerUp = { x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2, type };
       playRisingSweep();
     }
@@ -516,7 +519,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnetActive = false; magnetTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -632,8 +635,21 @@
       // Muntjes spawnen, bewegen & ophalen
       coinTimer++;
       if (coinTimer >= COIN_INTERVAL) { spawnCoin(); coinTimer = 0; }
+      if (magnetActive) { magnetTimer--; if (magnetTimer <= 0) magnetActive = false; }
       for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].y += coins[i].speed;
+        if (magnetActive) {
+          const cx = coins[i].x + coins[i].w / 2;
+          const cy = coins[i].y + coins[i].h / 2;
+          const px = player.x + player.w / 2;
+          const py = player.y + player.h / 2;
+          const dx = px - cx; const dy = py - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const pull = Math.min(6, 120 / dist);
+          coins[i].x += (dx / dist) * pull;
+          coins[i].y += (dy / dist) * pull;
+        } else {
+          coins[i].y += coins[i].speed;
+        }
         if (Math.random() < 0.5) {
           coinTrails.push({ x: coins[i].x + coins[i].w/2 + (Math.random()-0.5)*4, y: coins[i].y + (Math.random()-0.5)*3, vx: (Math.random()-0.5)*0.6, vy: -0.4 - Math.random()*0.6, size: 1.5 + Math.random()*2, life: 12 + Math.random()*10 });
         }
@@ -685,6 +701,8 @@
             scoreMultiplier = 2; scoreMultiplierTimer = SCORE_MULTIPLIER_DURATION;
           } else if (powerUp.type === 'slowmo') {
             slowMo = true; slowMoTimer = SLOWMO_DURATION;
+          } else if (powerUp.type === 'magnet') {
+            magnetActive = true; magnetTimer = MAGNET_DURATION;
           }
           powerUp = null; playBeep(660, 0.15); powerUpFlash = 12;
         }
@@ -1119,6 +1137,17 @@
           ctx.textAlign = 'center';
           ctx.fillText('S/M', powerUp.x + powerUp.w / 2, powerUp.y + 13);
           ctx.textAlign = 'left';
+        } else if (powerUp.type === 'magnet') {
+          ctx.fillStyle = '#ff4466';
+          ctx.shadowColor = '#ff4466';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🧲', powerUp.x + powerUp.w / 2, powerUp.y + 14);
+          ctx.textAlign = 'left';
         } else {
           ctx.fillStyle = powerUp.type === 'speed' ? '#0cf' : '#0f0';
           ctx.fillRect(powerUp.x, powerUp.y, powerUp.w, powerUp.h);
@@ -1126,6 +1155,18 @@
           ctx.font = '12px sans-serif';
           ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
         }
+      }
+
+      // Magneet indicator (pulserende ring rond speler)
+      if (magnetActive) {
+        const pulse = 0.5 + 0.5 * Math.sin(magnetTimer * 0.15);
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,68,102,${0.5 + 0.4 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x + player.w / 2, player.y + player.h / 2, 40 + 8 * pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       // Multiplier balk onder speler
