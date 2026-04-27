@@ -286,6 +286,9 @@
     let countdownTimer = 0;
     let countdownValue = 3;
     const COUNTDOWN_STEP = 60;
+    let frozenActive = false;
+    let frozenTimer = 0;
+    const FROZEN_DURATION = 60;
 
     // Pauze
     let paused = false;
@@ -356,7 +359,7 @@
     }
 
     function spawnObstacle() {
-      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag'];
+      const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag', 'freeze'];
       const type = types[Math.floor(Math.random() * types.length)];
       const size = (type === 'rect') ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
       const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
@@ -524,7 +527,7 @@
       gameStarted = true;
       countdownActive = true; countdownTimer = 0; countdownValue = 3;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnetActive = false; magnetTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnetActive = false; magnetTimer = 0; frozenActive = false; frozenTimer = 0;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -572,7 +575,8 @@
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
-      const currentSpeed = speedBoost ? player.speed * 2 : player.speed;
+      if (frozenActive) { frozenTimer--; if (frozenTimer <= 0) frozenActive = false; }
+      const currentSpeed = speedBoost ? player.speed * 2 : frozenActive ? player.speed * 0.3 : player.speed;
       if (keys['ArrowLeft'])  { player.x = Math.max(0, player.x - currentSpeed); player.rotVel -= 0.04; }
       if (keys['ArrowRight']) { player.x = Math.min(canvas.width - player.w, player.x + currentSpeed); player.rotVel += 0.04; }
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - currentSpeed);
@@ -816,6 +820,11 @@
           }
           dodgeStreak++;
           obstacles.splice(i, 1);
+        } else if (!hitInvincible && obstacles[i].type === 'freeze' && collides(player, obstacles[i])) {
+            frozenActive = true; frozenTimer = FROZEN_DURATION;
+            obstacles.splice(i, 1);
+            playBeep(220, 0.2, 'sine');
+            scorePops.push({ x: player.x + player.w / 2, y: player.y - 10, text: 'BEVROREN!', life: 60, maxLife: 60, big: false });
         } else if (!invincible && !hitInvincible && collides(player, obstacles[i])) {
             dodgeStreak = 0;
             lives--;
@@ -1033,12 +1042,12 @@
         ctx.fillStyle = '#000';
         ctx.fillRect(o.x + 4, o.y + 4, o.w, o.h);
         ctx.restore();
-        const glowMap = { rect: '#e44', triangle: '#f80', circle: '#c4f', zigzag: '#0ef' };
+        const glowMap = { rect: '#e44', triangle: '#f80', circle: '#c4f', zigzag: '#0ef', freeze: '#4df' };
         ctx.save();
         if (o.speed > 6) ctx.translate((Math.random() - 0.5) * 2, 0);
         ctx.shadowColor = glowMap[o.type] || '#e44';
         ctx.shadowBlur = Math.min(10 + (level - 1) * 2, 20);
-        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : '#e44';
+        ctx.fillStyle = o.type === 'triangle' ? '#f80' : o.type === 'circle' ? '#c4f' : o.type === 'zigzag' ? '#0ef' : o.type === 'freeze' ? '#4df' : '#e44';
         if (o.type === 'triangle') {
           ctx.beginPath();
           ctx.moveTo(o.x + o.w / 2, o.y);
@@ -1063,6 +1072,14 @@
             ctx.lineTo(o.x + zW * (z + 1), o.y + o.h / 2);
           }
           ctx.stroke();
+        } else if (o.type === 'freeze') {
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('❄', o.x + o.w / 2, o.y + o.h / 2 + 5);
+          ctx.textAlign = 'left';
         } else if (o.type === 'boss') {
           ctx.shadowColor = '#ff0000';
           ctx.shadowBlur = 24 + 10 * Math.sin(Date.now() / 120);
@@ -1171,6 +1188,15 @@
           ctx.font = '12px sans-serif';
           ctx.fillText(powerUp.type === 'speed' ? '►' : '★', powerUp.x + 4, powerUp.y + 15);
         }
+      }
+
+      // Bevroren indicator
+      if (frozenActive) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(68,221,255,${0.6 + 0.4 * Math.sin(frozenTimer * 0.3)})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(player.x - 4, player.y - 4, player.w + 8, player.h + 8);
+        ctx.restore();
       }
 
       // Magneet indicator (pulserende ring rond speler)
