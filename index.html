@@ -1254,7 +1254,7 @@
       for (let i = 0; i < trail.length; i++) {
         const t = trail[i];
         ctx.globalAlpha = (t.life / 10) * 0.4;
-        ctx.fillStyle = player.color || '#4af';
+        ctx.fillStyle = nightMode ? '#ffcc00' : skinColor;
         ctx.fillRect(t.x, t.y, player.w, player.h);
       }
       ctx.globalAlpha = 1;
