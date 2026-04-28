@@ -1255,9 +1255,19 @@
         } else if (speedBoost) {
           ctx.shadowColor = '#0cf';
           ctx.shadowBlur = 18 + 8 * Math.sin(Date.now() / 80);
+        } else if (frozen) {
+          ctx.shadowColor = '#88ddff';
+          ctx.shadowBlur = 14 + 6 * Math.sin(Date.now() / 120);
         }
         ctx.fillStyle = invincible ? '#ff0' : speedBoost ? '#0cf' : player.color;
         ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+        if (frozen) {
+          ctx.fillStyle = 'rgba(100, 200, 255, 0.45)';
+          ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+          ctx.strokeStyle = 'rgba(180, 230, 255, 0.85)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-player.w / 2, -player.h / 2, player.w, player.h);
+        }
         ctx.restore();
       }
 
