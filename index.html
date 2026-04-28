@@ -181,8 +181,10 @@
     let shopOpen = false;
     let shopShield = false;
     let shopExtraLife = false;
+    let shopDoubleCoins = false;
     const SHOP_SHIELD_COST = 10;
     const SHOP_LIFE_COST = 20;
+    const SHOP_DOUBLE_COINS_COST = 30;
 
     let lives = 3;
     let hitInvincible = false;
@@ -525,7 +527,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnet = false; magnetTimer = 0; frozen = false; frozenTimer = 0;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnet = false; magnetTimer = 0; frozen = false; frozenTimer = 0; shopDoubleCoins = false;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -537,6 +539,7 @@
       dailyChallengeProgress = dailyChallenge.type === 'coins' ? 0 : (dailyChallenge.type === 'survive' ? 0 : 0);
       if (shopShield) { invincible = true; invincibleTimer = INVINCIBLE_DURATION; shopShield = false; }
       if (shopExtraLife) { lives = 4; shopExtraLife = false; }
+      if (shopDoubleCoins) { scoreMultiplier = 2; scoreMultiplierTimer = 99999; shopDoubleCoins = false; }
       countdown = 4; countdownTimer = COUNTDOWN_STEP;
     }
 
@@ -948,12 +951,23 @@
         ctx.fillStyle = shopExtraLife ? '#000' : '#aaa';
         ctx.fillText('Begin de ronde met 4 levens', canvas.width / 2, 159);
 
+        // Item 3: Double coins
+        const canDouble = totalCoins >= SHOP_DOUBLE_COINS_COST;
+        ctx.fillStyle = shopDoubleCoins ? '#0f8' : (canDouble ? '#f80' : '#555');
+        ctx.fillRect(40, 178, canvas.width - 80, 38);
+        ctx.fillStyle = shopDoubleCoins ? '#000' : '#fff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(shopDoubleCoins ? '✓ Dubbele muntjes actief' : 'Dubbele muntjes — ' + SHOP_DOUBLE_COINS_COST + ' 🪙', canvas.width / 2, 193);
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = shopDoubleCoins ? '#000' : '#aaa';
+        ctx.fillText('Alle muntjes verdubbeld deze ronde', canvas.width / 2, 207);
+
         // Sluit knop
         ctx.fillStyle = '#333';
-        ctx.fillRect(canvas.width / 2 - 40, 178, 80, 28);
+        ctx.fillRect(canvas.width / 2 - 40, 226, 80, 28);
         ctx.fillStyle = '#fff';
         ctx.font = '13px sans-serif';
-        ctx.fillText('Sluiten', canvas.width / 2, 196);
+        ctx.fillText('Sluiten', canvas.width / 2, 244);
         ctx.textAlign = 'left';
       }
 
@@ -977,8 +991,15 @@
               localStorage.setItem('blokrenner_coins', totalCoins);
             } else if (shopExtraLife) { shopExtraLife = false; totalCoins += SHOP_LIFE_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
           }
+          // Item 3 klik
+          if (mx >= 40 && mx <= canvas.width - 40 && my >= 178 && my <= 216) {
+            if (!shopDoubleCoins && totalCoins >= SHOP_DOUBLE_COINS_COST) {
+              shopDoubleCoins = true; totalCoins -= SHOP_DOUBLE_COINS_COST;
+              localStorage.setItem('blokrenner_coins', totalCoins);
+            } else if (shopDoubleCoins) { shopDoubleCoins = false; totalCoins += SHOP_DOUBLE_COINS_COST; localStorage.setItem('blokrenner_coins', totalCoins); }
+          }
           // Sluiten klik
-          if (mx >= canvas.width / 2 - 40 && mx <= canvas.width / 2 + 40 && my >= 178 && my <= 206) {
+          if (mx >= canvas.width / 2 - 40 && mx <= canvas.width / 2 + 40 && my >= 226 && my <= 254) {
             shopOpen = false;
           }
           return;
