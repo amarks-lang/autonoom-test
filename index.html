@@ -269,6 +269,11 @@
     let invincibleTimer = 0;
     let speedBoost = false;
     let speedBoostTimer = 0;
+    let sprint = false;
+    let sprintTimer = 0;
+    let sprintCooldown = 0;
+    const SPRINT_DURATION = 30;
+    const SPRINT_COOLDOWN = 180;
     const POWERUP_INTERVAL = 300;
     const INVINCIBLE_DURATION = 180;
     const SPEED_BOOST_DURATION = 180;
@@ -530,7 +535,7 @@
       gameOver = false;
       gameStarted = true;
       stopBgMusic(); startBgMusic();
-      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; slowMo = false; slowMoTimer = 0; magnet = false; magnetTimer = 0; frozen = false; frozenTimer = 0; shopDoubleCoins = false;
+      powerUp = null; powerUpTimer = 0; invincible = false; invincibleTimer = 0; speedBoost = false; speedBoostTimer = 0; sprint = false; sprintTimer = 0; sprintCooldown = 0; slowMo = false; slowMoTimer = 0; magnet = false; magnetTimer = 0; frozen = false; frozenTimer = 0; shopDoubleCoins = false;
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
@@ -551,6 +556,9 @@
       if (gameOver && e.key === 'Enter') reset();
       if (gameStarted && !gameOver && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
         paused = !paused; updatePauseIcon();
+      }
+      if (gameStarted && !gameOver && !paused && e.key === ' ' && !sprint && sprintCooldown === 0) {
+        sprint = true; sprintTimer = SPRINT_DURATION; e.preventDefault();
       }
     });
 
@@ -589,7 +597,7 @@
       if (trail.length > 8) trail.shift();
       for (let i = trail.length - 1; i >= 0; i--) { trail[i].life--; if (trail[i].life <= 0) trail.splice(i, 1); }
 
-      const currentSpeed = frozen ? player.speed * 0.3 : speedBoost ? player.speed * 2 : player.speed;
+      const currentSpeed = frozen ? player.speed * 0.3 : (speedBoost || sprint) ? player.speed * 2 : player.speed;
       if (keys['ArrowLeft'])  { player.x = Math.max(0, player.x - currentSpeed); player.rotVel -= 0.04; }
       if (keys['ArrowRight']) { player.x = Math.min(canvas.width - player.w, player.x + currentSpeed); player.rotVel += 0.04; }
       if (keys['ArrowUp'])    player.y = Math.max(0, player.y - currentSpeed);
@@ -749,6 +757,8 @@
       // Invincibility aftellen
       if (invincible) { invincibleTimer--; if (invincibleTimer <= 0) { invincible = false; playFallingSweep(); } }
       if (speedBoost) { speedBoostTimer--; if (speedBoostTimer <= 0) { speedBoost = false; playFallingSweep(); } }
+      if (sprint) { sprintTimer--; if (sprintTimer <= 0) { sprint = false; sprintCooldown = SPRINT_COOLDOWN; } }
+      if (sprintCooldown > 0) sprintCooldown--;
       if (scoreMultiplier > 1) { scoreMultiplierTimer--; if (scoreMultiplierTimer <= 0) { scoreMultiplier = 1; playFallingSweep(); } }
       if (slowMo) { slowMoTimer--; if (slowMoTimer <= 0) { slowMo = false; playFallingSweep(); } }
       if (magnet) { magnetTimer--; if (magnetTimer <= 0) { magnet = false; playFallingSweep(); } }
@@ -1232,6 +1242,24 @@
         ctx.textAlign = 'left';
         ctx.fillText('x2', barX + barW + 3, barY + 4);
         ctx.restore();
+      }
+
+      // Sprint cooldown balk onder speler
+      {
+        const barW = player.w + 8;
+        const barX = player.x - 4;
+        const barY = player.y - 8;
+        if (sprint) {
+          ctx.fillStyle = '#333';
+          ctx.fillRect(barX, barY, barW, 3);
+          ctx.fillStyle = '#ff8c00';
+          ctx.fillRect(barX, barY, barW * (sprintTimer / SPRINT_DURATION), 3);
+        } else if (sprintCooldown > 0) {
+          ctx.fillStyle = '#333';
+          ctx.fillRect(barX, barY, barW, 3);
+          ctx.fillStyle = '#aaa';
+          ctx.fillRect(barX, barY, barW * (1 - sprintCooldown / SPRINT_COOLDOWN), 3);
+        }
       }
 
       // Trail tekenen
