@@ -1304,6 +1304,20 @@
         ctx.restore();
       }
 
+      // Sprint ⚡ animatie boven speler
+      if (sprint) {
+        const boltX = player.x + player.w / 2;
+        const boltY = player.y - 16 - 4 * Math.sin(Date.now() / 80);
+        const boltAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 60);
+        ctx.save();
+        ctx.globalAlpha = boltAlpha;
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚡', boltX, boltY);
+        ctx.restore();
+      }
+
       // Power-up aftelbalk onder speler
       if (invincible || speedBoost) {
         const timer = invincible ? invincibleTimer : speedBoostTimer;
