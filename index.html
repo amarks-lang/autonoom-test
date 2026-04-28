@@ -129,7 +129,7 @@
     let isNewBestTime = false;
     function loadHighscores() {
       try {
-        const raw = JSON.parse(localStorage.getItem('blokrenner_top3') || '[]');
+        const raw = JSON.parse(localStorage.getItem('blokrenner_top5') || '[]');
         return raw.map(e => typeof e === 'object' ? e : { name: '???', score: e });
       } catch(e) { return []; }
     }
@@ -137,8 +137,8 @@
       const list = loadHighscores();
       list.push({ name: name || '???', score: sc });
       list.sort((a, b) => b.score - a.score);
-      const top3 = list.slice(0, 3);
-      localStorage.setItem('blokrenner_top3', JSON.stringify(top3));
+      const top5 = list.slice(0, 5);
+      localStorage.setItem('blokrenner_top5', JSON.stringify(top5));
     }
     const sessionScores = [];
     let pendingScore = 0;
@@ -867,7 +867,7 @@
         ctx.font = (isNewBestTime ? 'bold ' : '') + '11px sans-serif';
         ctx.fillText('⏱ Beste tijd: ' + bestTime + 's' + (isNewBestTime ? '  ★ Nieuw record!' : ''), canvas.width / 2, canvas.height / 2 + 12);
       }
-      const top3 = loadHighscores();
+      const top3 = loadHighscores().slice(0, 3);
       if (top3.length > 0) {
         ctx.fillStyle = '#ff0';
         ctx.font = 'bold 13px sans-serif';
@@ -1652,19 +1652,19 @@
         ctx.fillText('Highscore: ' + highscore, canvas.width / 2, canvas.height / 2 + 35);
         ctx.fillStyle = '#fff';
         ctx.fillText('Druk Enter om opnieuw te spelen', canvas.width / 2, canvas.height / 2 + 55);
-        // Top-3 sessie scores
-        if (sessionScores.length > 1) {
-          const top3s = [...sessionScores].sort((a, b) => b - a).slice(0, 3);
+        // Top-5 persistente scores (localStorage, naam + score)
+        const top5 = loadHighscores();
+        if (top5.length > 0) {
           ctx.fillStyle = '#ffe040';
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillText('🏆 Sessie top ' + top3s.length + ':', canvas.width / 2, canvas.height / 2 + 70);
-          ctx.font = '11px sans-serif';
-          const medals = ['🥇', '🥈', '🥉'];
-          top3s.forEach((s, i) => ctx.fillText(medals[i] + ' ' + s, canvas.width / 2, canvas.height / 2 + 83 + i * 13));
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText('🏆 Top 5:', canvas.width / 2, canvas.height / 2 + 64);
+          ctx.font = '10px sans-serif';
+          const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+          top5.forEach((e, i) => ctx.fillText(medals[i] + ' ' + e.name + ': ' + e.score, canvas.width / 2, canvas.height / 2 + 75 + i * 10));
         }
         // Opnieuw-knop op canvas
-        const extraOffset = sessionScores.length > 1 ? Math.min(sessionScores.length, 3) * 13 + 16 : 0;
-        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 65 + extraOffset, rbw = 120, rbh = 34;
+        const extraOffset = top5.length > 0 ? top5.length * 10 + 12 : 0;
+        const rbx = canvas.width / 2 - 60, rby = canvas.height / 2 + 58 + extraOffset, rbw = 120, rbh = 30;
         ctx.fillStyle = '#4af';
         ctx.beginPath();
         ctx.roundRect(rbx, rby, rbw, rbh, 6);
