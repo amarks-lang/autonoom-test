@@ -364,8 +364,10 @@
       const types = ['rect', 'rect', 'rect', 'triangle', 'circle', 'zigzag', 'freeze'];
       const type = types[Math.floor(Math.random() * types.length)];
       const size = (type === 'rect') ? [20, 20, 40, 16, 16, 40][Math.floor(Math.random()*3)*2] : 26;
-      const w = type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size;
-      const h = type === 'rect' ? [20,16,40][Math.floor(Math.random()*3)] : size;
+      const level = Math.floor(score / 10) + 1;
+      const scale = Math.min(1 + (level - 1) * 0.1, 2);
+      const w = Math.round((type === 'rect' ? [20,40,16][Math.floor(Math.random()*3)] : size) * scale);
+      const h = Math.round((type === 'rect' ? [20,16,40][Math.floor(Math.random()*3)] : size) * scale);
       const spd = 2 + Math.random() * 2 + score * 0.3;
       const obs = {
         x: Math.random() * (canvas.width - w),
