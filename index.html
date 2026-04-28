@@ -1318,6 +1318,24 @@
         ctx.restore();
       }
 
+      // Shield ring om speler als invincible actief is
+      if (invincible) {
+        const cx = player.x + player.w / 2;
+        const cy = player.y + player.h / 2;
+        const radius = (player.w / 2 + 10) + 3 * Math.sin(Date.now() / 120);
+        ctx.save();
+        ctx.globalAlpha = 0.35 + 0.2 * Math.sin(Date.now() / 100);
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffe066';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#ffe066';
+        ctx.fill();
+        ctx.restore();
+      }
+
       // Power-up aftelbalk onder speler
       if (invincible || speedBoost) {
         const timer = invincible ? invincibleTimer : speedBoostTimer;
