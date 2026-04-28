@@ -1532,13 +1532,27 @@
         ctx.restore();
       }
 
-      // Dodge streak teller
+      // Dodge streak teller (verbeterd)
       if (dodgeStreak > 0) {
         ctx.save();
-        ctx.fillStyle = dodgeStreak >= 10 ? '#f80' : '#4af';
-        ctx.font = `bold ${dodgeStreak >= 10 ? 13 : 11}px sans-serif`;
+        const streakHot = dodgeStreak >= 5;
+        const pulse = 0.85 + 0.15 * Math.sin(Date.now() / 130);
+        const label = '🔥 x' + dodgeStreak;
+        const fontSize = streakHot ? 15 : 13;
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        const tw = ctx.measureText(label).width;
+        const sx = canvas.width - 8, sy = 44;
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.roundRect(sx - tw - 8, sy - fontSize - 2, tw + 12, fontSize + 8, 5);
+        ctx.fill();
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = streakHot ? '#ff7700' : '#4af';
+        if (streakHot) { ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 10; }
         ctx.textAlign = 'right';
-        ctx.fillText('🔥 streak: ' + dodgeStreak, canvas.width - 4, 36);
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(label, sx, sy);
         ctx.restore();
       }
 
