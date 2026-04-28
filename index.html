@@ -296,6 +296,7 @@
     let playerIdleTimer = 0;
     let scoreFlash = 0;
     let powerUpFlash = 0;
+    let coinFlash = 0;
     const scorePops = [];
     const explosionRings = [];
     const trail = [];
@@ -531,7 +532,7 @@
       lastLevel = 1; levelBanner = ''; levelBannerTimer = 0; levelFlash = 0; gameOverFlash = 0; shakeTimer = 0;
       milestoneBanner = ''; milestoneBannerTimer = 0;
       lives = 3; hitInvincible = false; hitInvincibleTimer = 0; explosionRings.length = 0; isNewHighscore = false; sessionTimer = 0; isNewBestTime = false;
-      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
+      heartBlinkTimer = 0; heartBlinkIndex = -1; powerUpFlash = 0; coinFlash = 0; confettiMilestones.clear(); confetti.length = 0; coins.length = 0; coinTimer = 0; scoreMultiplier = 1; scoreMultiplierTimer = 0; gameOverSpin = false; gameOverSpinTimer = 0;
       bossLevelsSpawned.clear(); bossWarningTimer = 0;
       dodgeStreak = 0;
       achievementsUnlocked.clear(); achievementQueue.length = 0; achievementTimer = 0; sessionCoinCount = 0; coinTrails.length = 0;
@@ -689,6 +690,7 @@
           }
           scorePops.push({ x: coins[i].x + coins[i].w / 2, y: coins[i].y, text: '+' + coinGain, life: 60, maxLife: 60, big: true });
           playBeep(1047, 0.1, 'sine');
+          coinFlash = 10;
           // Ster-burst bij ophalen muntje
           for (let s = 0; s < 12; s++) {
             const angle = (s / 12) * Math.PI * 2;
@@ -766,6 +768,7 @@
       if (scoreFlash > 0) scoreFlash--;
       if (heartBlinkTimer > 0) heartBlinkTimer--;
       if (powerUpFlash > 0) powerUpFlash--;
+      if (coinFlash > 0) coinFlash--;
 
       const obsSpdFactor = slowMo ? 0.5 : 1;
       for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -1611,6 +1614,16 @@
       if (powerUpFlash > 0) {
         ctx.fillStyle = `rgba(255,255,255,${0.6 * Math.sin((powerUpFlash / 12) * Math.PI)})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (coinFlash > 0) {
+        const alpha = (coinFlash / 10) * 0.85;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = skinColor;
+        ctx.lineWidth = 14;
+        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
       }
 
       if (gameOverFlash > 0) {
