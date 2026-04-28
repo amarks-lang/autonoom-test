@@ -1304,6 +1304,23 @@
         ctx.restore();
       }
 
+      // Sprint-pictogram animatie boven speler
+      if (sprint) {
+        const iconX = player.x + player.w / 2;
+        const iconY = player.y - 18 - 4 * Math.sin(Date.now() / 120);
+        const iconAlpha = 0.6 + 0.4 * (sprintTimer / SPRINT_DURATION);
+        const iconScale = 1 + 0.15 * Math.sin(Date.now() / 80);
+        ctx.save();
+        ctx.globalAlpha = iconAlpha;
+        ctx.font = `bold ${Math.round(16 * iconScale)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#ff8c00';
+        ctx.shadowBlur = 8;
+        ctx.fillText('⚡', iconX, iconY);
+        ctx.restore();
+      }
+
       // Power-up aftelbalk onder speler
       if (invincible || speedBoost) {
         const timer = invincible ? invincibleTimer : speedBoostTimer;
