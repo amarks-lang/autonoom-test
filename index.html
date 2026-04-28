@@ -559,6 +559,17 @@
       }
       if (gameStarted && !gameOver && !paused && e.key === ' ' && !sprint && sprintCooldown === 0) {
         sprint = true; sprintTimer = SPRINT_DURATION; e.preventDefault();
+        if (!muted) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.18);
+          gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+          osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        }
       }
     });
 
